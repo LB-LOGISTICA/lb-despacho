@@ -255,8 +255,33 @@ input[type="file"]{display:none;}
 <!-- ══ DASHBOARD VIEW ══ -->
 <div class="view-panel" id="panel-dashboard">
 
+  <!-- FILTROS DASHBOARD -->
+  <div class="filters-bar no-print" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);">
+    <span style="color:rgba(255,255,255,.7);font-size:.8em;font-weight:700;white-space:nowrap">🔍 Filtrar todo:</span>
+    <select id="dash-f-quarter" onchange="renderDashboard()" style="background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2)">
+      <option value="">Todos los quarters</option>
+      <option value="Q1">Q1 (Ene-Mar)</option>
+      <option value="Q2">Q2 (Abr-Jun)</option>
+      <option value="Q3">Q3 (Jul-Sep)</option>
+      <option value="Q4">Q4 (Oct-Dic)</option>
+    </select>
+    <select id="dash-f-mes" onchange="renderDashboard()" style="background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2)">
+      <option value="">Todos los meses</option>
+    </select>
+    <select id="dash-f-cliente" onchange="renderDashboard()" style="background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2)">
+      <option value="">Todos los clientes</option>
+    </select>
+    <select id="dash-f-estado" onchange="renderDashboard()" style="background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2)">
+      <option value="">Todos los estados</option>
+      <option value="DESPACHOS OK">✅ Despachos OK</option>
+      <option value="PENDIENTE">⏳ Pendiente</option>
+      <option value="EN TRANSITO">🚛 En Tránsito</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="clearDashFilters()" style="background:rgba(255,100,100,.2);color:#ffaaaa;border-color:rgba(255,100,100,.3)">✖ Limpiar filtros</button>
+  </div>
+
   <!-- KPI TOP -->
-  <div class="kpi-grid" id="dash-kpi-grid">
+  <div class="kpi-grid">
     <div class="d-card"><h3>Pallets del Mes</h3><p id="dash-kpi-pallets">0</p></div>
     <div class="d-card"><h3>OC Únicas</h3><p id="dash-kpi-oc">0</p></div>
     <div class="d-card"><h3>Guías Emitidas</h3><p id="dash-kpi-guias">0</p></div>
@@ -264,45 +289,61 @@ input[type="file"]{display:none;}
     <div class="d-card"><h3>Cumplimiento</h3><p id="dash-kpi-cumpl">0%</p><small id="dash-kpi-det">0 OK / 0 Pend.</small></div>
   </div>
 
-  <!-- FILA 1: 3 gráficos de línea/barra por mes -->
+  <!-- FILA 1: 3 gráficos por mes -->
   <div class="dash-grid-3">
     <div class="chart-card">
       <div class="chart-card-title">📦 Pallets por Mes</div>
-      <div style="position:relative;height:200px"><canvas id="chart-pallets-mes" role="img" aria-label="Pallets despachados por mes"></canvas></div>
+      <div style="position:relative;height:210px"><canvas id="chart-pallets-mes"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-card-title">🗂️ OC por Mes</div>
-      <div style="position:relative;height:200px"><canvas id="chart-oc-mes" role="img" aria-label="Órdenes de compra por mes"></canvas></div>
+      <div style="position:relative;height:210px"><canvas id="chart-oc-mes"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-card-title">📐 Volumen m³ por Mes</div>
-      <div style="position:relative;height:200px"><canvas id="chart-vol-mes" role="img" aria-label="Volumen en metros cúbicos por mes"></canvas></div>
+      <div style="position:relative;height:210px"><canvas id="chart-vol-mes"></canvas></div>
     </div>
   </div>
 
-  <!-- FILA 2: Donut estados + Tabla clientes -->
-  <div class="dash-grid-donut">
+  <!-- FILA 2: Donut + Pareto -->
+  <div class="dash-grid-2">
     <div class="chart-card" style="display:flex;flex-direction:column;align-items:center;">
       <div class="chart-card-title" style="align-self:flex-start">🚦 Estado de Despachos</div>
-      <div id="donut-legend" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:.78em;color:rgba(255,255,255,.8)"></div>
-      <div style="position:relative;height:220px;width:220px"><canvas id="chart-estados" role="img" aria-label="Distribución de estados de despachos"></canvas></div>
+      <div id="donut-legend" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:.8em;color:rgba(255,255,255,.8)"></div>
+      <div style="position:relative;height:230px;width:230px"><canvas id="chart-estados"></canvas></div>
     </div>
-    <div>
-      <div class="chart-card-title" style="color:rgba(255,255,255,.85);font-size:.8em;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">👥 Resumen por Cliente</div>
-      <div class="dash-clientes-card">
-        <table style="width:100%;border-collapse:collapse">
-          <thead class="dc-thead"><tr>
-            <th>Cliente</th>
-            <th class="right">Pallets</th>
-            <th class="right">OC</th>
-            <th class="right">Vol. m³</th>
-            <th class="right">Despachos</th>
-            <th style="padding:10px 14px;text-align:center;font-size:.72em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Estado</th>
-          </tr></thead>
-          <tbody id="dash-clientes-tbody" class="dc-tbody"></tbody>
-        </table>
-        <div id="dash-clientes-empty" style="text-align:center;padding:36px;color:var(--text-muted);font-size:.9em">Sin datos aún</div>
-      </div>
+    <div class="chart-card">
+      <div class="chart-card-title">📊 Pareto Clientes por Pallets</div>
+      <div style="position:relative;height:260px"><canvas id="chart-pareto"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FILA 3: Tabla clientes grande -->
+  <div>
+    <div class="chart-card-title" style="color:rgba(255,255,255,.85);font-size:.9em;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">👥 Resumen por Cliente</div>
+    <div class="dash-clientes-card">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+        <colgroup>
+          <col style="width:22%">
+          <col style="width:12%">
+          <col style="width:12%">
+          <col style="width:12%">
+          <col style="width:12%">
+          <col style="width:15%">
+          <col style="width:15%">
+        </colgroup>
+        <thead class="dc-thead"><tr>
+          <th style="padding:12px 16px;text-align:left;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Cliente</th>
+          <th style="padding:12px 16px;text-align:right;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Pallets</th>
+          <th style="padding:12px 16px;text-align:right;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">OC</th>
+          <th style="padding:12px 16px;text-align:right;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Vol. m³</th>
+          <th style="padding:12px 16px;text-align:right;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Despachos</th>
+          <th style="padding:12px 16px;text-align:right;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">% del Total</th>
+          <th style="padding:12px 16px;text-align:center;font-size:.8em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Cumplimiento</th>
+        </tr></thead>
+        <tbody id="dash-clientes-tbody"></tbody>
+      </table>
+      <div id="dash-clientes-empty" style="text-align:center;padding:36px;color:var(--text-muted);font-size:.9em">Sin datos aún</div>
     </div>
   </div>
 
@@ -829,58 +870,111 @@ function switchTab(tab){
   document.getElementById('tab-despachos').classList.toggle('active', tab==='despachos');
   document.getElementById('tab-dashboard').classList.toggle('active', tab==='dashboard');
   document.getElementById('despachos-actions').style.display = tab==='despachos' ? 'flex' : 'none';
-  if(tab==='dashboard') renderDashboard();
+  if(tab==='dashboard'){ fillDashFilters(); renderDashboard(); }
 }
 
 // ══════════════════════════════════════════════
-//  HELPERS DASHBOARD
+//  FILTROS DASHBOARD
+// ══════════════════════════════════════════════
+function getDashFiltered(){
+  const q = (document.getElementById('dash-f-quarter')||{value:''}).value;
+  const m = (document.getElementById('dash-f-mes')||{value:''}).value;
+  const c = (document.getElementById('dash-f-cliente')||{value:''}).value;
+  const e = (document.getElementById('dash-f-estado')||{value:''}).value;
+  return despachos.filter(d=>
+    (!q || d.quarter===q) &&
+    (!m || d.fechaObj?.startsWith(m)) &&
+    (!c || d.cliente===c) &&
+    (!e || d.estado===e)
+  );
+}
+function fillDashFilters(){
+  const meses    = [...new Set(despachos.map(d=>d.fechaObj?.substring(0,7)).filter(Boolean))].sort().reverse();
+  const clientes = [...new Set(despachos.map(d=>d.cliente).filter(Boolean))].sort();
+  const selMes = document.getElementById('dash-f-mes');
+  const selCli = document.getElementById('dash-f-cliente');
+  if(selMes) selMes.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(selCli) selCli.innerHTML = '<option value="">Todos los clientes</option>' + clientes.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function clearDashFilters(){
+  ['dash-f-quarter','dash-f-mes','dash-f-cliente','dash-f-estado'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  renderDashboard();
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS CHARTS
 // ══════════════════════════════════════════════
 const _charts = {};
 function destroyChart(id){ if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; } }
 
-function getMeses(n=6){
-  const keys=[], labels=[];
-  for(let i=n-1;i>=0;i--){
-    const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
-    keys.push(d.toISOString().substring(0,7));
-    labels.push(d.toLocaleDateString('es-CL',{month:'short',year:'2-digit'}));
-  }
-  return {keys, labels};
+function getMeses(data){
+  const allM = [...new Set(data.map(d=>d.fechaObj?.substring(0,7)).filter(Boolean))];
+  const last6 = [];
+  for(let i=5;i>=0;i--){ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i); last6.push(d.toISOString().substring(0,7)); }
+  const combined = [...new Set([...last6,...allM])].sort();
+  return {
+    keys: combined,
+    labels: combined.map(k=>{ const d=new Date(k+'-01'); return d.toLocaleDateString('es-CL',{month:'short',year:'2-digit'}); })
+  };
 }
 
-const CHART_OPTS = ()=>({
-  responsive:true,
-  maintainAspectRatio:false,
+const DATALABELS_PLUGIN = {
+  id:'customLabels',
+  afterDatasetsDraw(chart){
+    const {ctx} = chart;
+    chart.data.datasets.forEach((ds,di)=>{
+      if(ds.type==='line'||chart.config.type==='line') return; // skip line
+      const meta = chart.getDatasetMeta(di);
+      if(meta.hidden) return;
+      meta.data.forEach((el,i)=>{
+        const val = ds.data[i]; if(!val) return;
+        ctx.save();
+        ctx.font='bold 11px Segoe UI';
+        ctx.fillStyle='rgba(255,255,255,.9)';
+        ctx.textAlign='center';
+        ctx.textBaseline='bottom';
+        const {x,y} = el.tooltipPosition();
+        ctx.fillText(Number.isInteger(val)?val:val.toFixed(1), x, y-3);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+const BASE_OPTS = ()=>({
+  responsive:true, maintainAspectRatio:false,
   plugins:{legend:{display:false}},
   scales:{
-    x:{ticks:{color:'rgba(255,255,255,.7)',font:{size:10}},grid:{color:'rgba(255,255,255,.08)'}},
-    y:{ticks:{color:'rgba(255,255,255,.7)',font:{size:10}},grid:{color:'rgba(255,255,255,.08)'},beginAtZero:true}
+    x:{ticks:{color:'rgba(255,255,255,.7)',font:{size:10}},grid:{color:'rgba(255,255,255,.07)'}},
+    y:{ticks:{color:'rgba(255,255,255,.7)',font:{size:10}},grid:{color:'rgba(255,255,255,.07)'},beginAtZero:true}
   }
 });
 
 // ══════════════════════════════════════════════
-//  RENDER DASHBOARD COMPLETO
+//  RENDER DASHBOARD
 // ══════════════════════════════════════════════
 function renderDashboard(){
-  updateDashKpi();
-  renderChartPalletsMes();
-  renderChartOcMes();
-  renderChartVolMes();
-  renderChartEstados();
-  renderTablaClientes();
+  const data = getDashFiltered();
+  updateDashKpi(data);
+  renderChartPalletsMes(data);
+  renderChartOcMes(data);
+  renderChartVolMes(data);
+  renderChartEstados(data);
+  renderChartPareto(data);
+  renderTablaClientes(data);
 }
 
-// ── KPI DASH ──
-function updateDashKpi(){
-  const mes = new Date().toISOString().substring(0,7);
-  const desMes = despachos.filter(d=>d.fechaObj?.startsWith(mes));
-  const pMes   = desMes.reduce((s,d)=>s+(d.pallets||0),0);
-  const ocU    = new Set(despachos.map(d=>d.oc).filter(Boolean)).size;
-  const guias  = despachos.filter(d=>d.guia).length;
-  const vol    = despachos.reduce((s,d)=>s+(d.vol||0),0);
-  const ok     = despachos.filter(d=>d.estado==='DESPACHOS OK').length;
-  const pend   = despachos.filter(d=>d.estado!=='DESPACHOS OK').length;
-  const cumpl  = despachos.length ? Math.round((ok/despachos.length)*100) : 0;
+function updateDashKpi(data){
+  const mes   = new Date().toISOString().substring(0,7);
+  const pMes  = data.filter(d=>d.fechaObj?.startsWith(mes)).reduce((s,d)=>s+(d.pallets||0),0);
+  const ocU   = new Set(data.map(d=>d.oc).filter(Boolean)).size;
+  const guias = data.filter(d=>d.guia).length;
+  const vol   = data.reduce((s,d)=>s+(d.vol||0),0);
+  const ok    = data.filter(d=>d.estado==='DESPACHOS OK').length;
+  const pend  = data.filter(d=>d.estado!=='DESPACHOS OK').length;
+  const cumpl = data.length ? Math.round((ok/data.length)*100) : 0;
   const s = id=>document.getElementById(id);
   if(s('dash-kpi-pallets')) s('dash-kpi-pallets').textContent = pMes;
   if(s('dash-kpi-oc'))      s('dash-kpi-oc').textContent      = ocU;
@@ -890,106 +984,96 @@ function updateDashKpi(){
   if(s('dash-kpi-det'))     s('dash-kpi-det').textContent     = `${ok} OK / ${pend} Pend.`;
 }
 
-// ── PALLETS POR MES ──
-function renderChartPalletsMes(){
+function renderChartPalletsMes(data){
   const ctx = document.getElementById('chart-pallets-mes'); if(!ctx) return;
   destroyChart('pallets-mes');
-  const {keys,labels} = getMeses(6);
-  const data = keys.map(m=>despachos.filter(d=>d.fechaObj?.startsWith(m)).reduce((s,d)=>s+(d.pallets||0),0));
+  const {keys,labels} = getMeses(data);
+  const vals = keys.map(m=>data.filter(d=>d.fechaObj?.startsWith(m)).reduce((s,d)=>s+(d.pallets||0),0));
   _charts['pallets-mes'] = new Chart(ctx,{
-    type:'bar',
-    data:{labels, datasets:[{
-      label:'Pallets',data,
-      backgroundColor:'rgba(46,158,122,.75)',
-      borderColor:'#2e9e7a',borderWidth:2,borderRadius:6
-    }]},
-    options:CHART_OPTS()
+    type:'bar', plugins:[DATALABELS_PLUGIN],
+    data:{labels,datasets:[{label:'Pallets',data:vals,backgroundColor:'rgba(46,158,122,.75)',borderColor:'#2e9e7a',borderWidth:2,borderRadius:6}]},
+    options:BASE_OPTS()
   });
 }
 
-// ── OC POR MES ──
-function renderChartOcMes(){
+function renderChartOcMes(data){
   const ctx = document.getElementById('chart-oc-mes'); if(!ctx) return;
   destroyChart('oc-mes');
-  const {keys,labels} = getMeses(6);
-  const data = keys.map(m=>{
-    const desM = despachos.filter(d=>d.fechaObj?.startsWith(m));
-    return new Set(desM.map(d=>d.oc).filter(Boolean)).size;
-  });
+  const {keys,labels} = getMeses(data);
+  const vals = keys.map(m=>new Set(data.filter(d=>d.fechaObj?.startsWith(m)).map(d=>d.oc).filter(Boolean)).size);
   _charts['oc-mes'] = new Chart(ctx,{
-    type:'bar',
-    data:{labels, datasets:[{
-      label:'OC únicas',data,
-      backgroundColor:'rgba(168,100,220,.7)',
-      borderColor:'#a864dc',borderWidth:2,borderRadius:6
-    }]},
-    options:CHART_OPTS()
+    type:'bar', plugins:[DATALABELS_PLUGIN],
+    data:{labels,datasets:[{label:'OC',data:vals,backgroundColor:'rgba(168,100,220,.7)',borderColor:'#a864dc',borderWidth:2,borderRadius:6}]},
+    options:BASE_OPTS()
   });
 }
 
-// ── VOLUMEN m³ POR MES ──
-function renderChartVolMes(){
+function renderChartVolMes(data){
   const ctx = document.getElementById('chart-vol-mes'); if(!ctx) return;
   destroyChart('vol-mes');
-  const {keys,labels} = getMeses(6);
-  const data = keys.map(m=>+despachos.filter(d=>d.fechaObj?.startsWith(m)).reduce((s,d)=>s+(d.vol||0),0).toFixed(2));
+  const {keys,labels} = getMeses(data);
+  const vals = keys.map(m=>+data.filter(d=>d.fechaObj?.startsWith(m)).reduce((s,d)=>s+(d.vol||0),0).toFixed(2));
   _charts['vol-mes'] = new Chart(ctx,{
-    type:'line',
-    data:{labels, datasets:[{
-      label:'m³',data,
-      borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,.18)',
-      borderWidth:2,fill:true,tension:.4,
-      pointBackgroundColor:'#38bdf8',pointRadius:4,pointHoverRadius:6
-    }]},
-    options:CHART_OPTS()
+    type:'line', plugins:[DATALABELS_PLUGIN],
+    data:{labels,datasets:[{label:'m³',data:vals,borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,.18)',borderWidth:2,fill:true,tension:.4,pointBackgroundColor:'#38bdf8',pointRadius:5,pointHoverRadius:7}]},
+    options:{...BASE_OPTS(),plugins:{legend:{display:false},tooltip:{callbacks:{label:p=>` ${p.raw.toFixed(1)} m³`}}}}
   });
 }
 
-// ── DONUT ESTADOS ──
-function renderChartEstados(){
+function renderChartEstados(data){
   const ctx = document.getElementById('chart-estados'); if(!ctx) return;
   destroyChart('estados');
-  const ok    = despachos.filter(d=>d.estado==='DESPACHOS OK').length;
-  const pend  = despachos.filter(d=>d.estado==='PENDIENTE').length;
-  const trans = despachos.filter(d=>d.estado==='EN TRANSITO').length;
+  const ok    = data.filter(d=>d.estado==='DESPACHOS OK').length;
+  const pend  = data.filter(d=>d.estado==='PENDIENTE').length;
+  const trans = data.filter(d=>d.estado==='EN TRANSITO').length;
   const total = ok+pend+trans||1;
   const colors = ['#2e9e7a','#facc15','#38bdf8'];
   const labels = ['Despachado OK','Pendiente','En Tránsito'];
-  const data   = [ok,pend,trans];
-
-  // Custom legend
+  const vals   = [ok,pend,trans];
   const leg = document.getElementById('donut-legend');
-  if(leg) leg.innerHTML = labels.map((l,i)=>`
-    <span style="display:flex;align-items:center;gap:5px">
-      <span style="width:10px;height:10px;border-radius:2px;background:${colors[i]}"></span>
-      ${l} (${data[i]})
-    </span>`).join('');
-
+  if(leg) leg.innerHTML = labels.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:3px;background:${colors[i]}"></span><span style="font-size:.82em">${l} (${vals[i]})</span></span>`).join('');
   _charts['estados'] = new Chart(ctx,{
     type:'doughnut',
-    data:{labels,datasets:[{
-      data,
-      backgroundColor:colors,
-      borderColor:'rgba(255,255,255,.12)',borderWidth:2
-    }]},
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderColor:'rgba(255,255,255,.12)',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:p=>{const pct=Math.round((p.raw/total)*100); return ` ${p.label}: ${p.raw} (${pct}%)`;}}}}}
+  });
+}
+
+function renderChartPareto(data){
+  const ctx = document.getElementById('chart-pareto'); if(!ctx) return;
+  destroyChart('pareto');
+  const clMap = {};
+  data.forEach(d=>{ const c=d.cliente||'Sin cliente'; clMap[c]=(clMap[c]||0)+(d.pallets||0); });
+  const sorted = Object.entries(clMap).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const labels = sorted.map(x=>x[0]);
+  const vals   = sorted.map(x=>x[1]);
+  const total  = vals.reduce((s,v)=>s+v,0)||1;
+  let acum=0;
+  const pct = vals.map(v=>{ acum+=v; return +((acum/total)*100).toFixed(1); });
+  _charts['pareto'] = new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Pallets',data:vals,backgroundColor:'rgba(46,158,122,.75)',borderColor:'#2e9e7a',borderWidth:2,borderRadius:4,yAxisID:'y'},
+      {label:'% Acum.',data:pct,type:'line',borderColor:'#facc15',backgroundColor:'rgba(250,204,21,.1)',borderWidth:2.5,fill:false,tension:.4,pointBackgroundColor:'#facc15',pointRadius:4,yAxisID:'y2'}
+    ]},
+    plugins:[DATALABELS_PLUGIN],
     options:{
-      responsive:true,maintainAspectRatio:false,
-      cutout:'65%',
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:p=>{
-          const pct=Math.round((p.raw/total)*100);
-          return ` ${p.label}: ${p.raw} (${pct}%)`;
-        }}}
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{color:'rgba(255,255,255,.75)',font:{size:10},boxWidth:12}},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{ticks:{color:'rgba(255,255,255,.7)',font:{size:9},maxRotation:35},grid:{color:'rgba(255,255,255,.07)'}},
+        y:{ticks:{color:'rgba(255,255,255,.7)',font:{size:10}},grid:{color:'rgba(255,255,255,.07)'},beginAtZero:true,title:{display:true,text:'Pallets',color:'rgba(255,255,255,.4)',font:{size:9}}},
+        y2:{position:'right',min:0,max:100,ticks:{color:'rgba(250,204,21,.8)',font:{size:10},callback:v=>v+'%'},grid:{display:false},title:{display:true,text:'% Acum.',color:'rgba(250,204,21,.4)',font:{size:9}}}
       }
     }
   });
 }
 
-// ── TABLA CLIENTES ──
-function renderTablaClientes(){
+function renderTablaClientes(data){
+  const totalPallets = data.reduce((s,d)=>s+(d.pallets||0),0)||1;
   const clMap = {};
-  despachos.forEach(d=>{
+  data.forEach(d=>{
     const c = d.cliente||'Sin cliente';
     if(!clMap[c]) clMap[c]={pallets:0,ocs:new Set(),vol:0,total:0,estados:[]};
     clMap[c].pallets += d.pallets||0;
@@ -998,32 +1082,35 @@ function renderTablaClientes(){
     clMap[c].total++;
     clMap[c].estados.push(d.estado);
   });
-
   const sorted = Object.entries(clMap).sort((a,b)=>b[1].pallets-a[1].pallets);
-  const tbody  = document.getElementById('dash-clientes-tbody');
-  const empty  = document.getElementById('dash-clientes-empty');
+  const tbody = document.getElementById('dash-clientes-tbody');
+  const empty = document.getElementById('dash-clientes-empty');
   if(!tbody) return;
-
-  if(!sorted.length){
-    tbody.innerHTML=''; if(empty) empty.style.display='block'; return;
-  }
+  if(!sorted.length){ tbody.innerHTML=''; if(empty) empty.style.display='block'; return; }
   if(empty) empty.style.display='none';
-
-  tbody.innerHTML = sorted.map(([cli,v])=>{
-    const okN  = v.estados.filter(e=>e==='DESPACHOS OK').length;
-    const pctOk= v.total ? Math.round((okN/v.total)*100) : 0;
-    const badge = pctOk===100
-      ? `<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">✅ ${pctOk}%</span>`
+  tbody.innerHTML = sorted.map(([cli,v],i)=>{
+    const okN    = v.estados.filter(e=>e==='DESPACHOS OK').length;
+    const pctOk  = v.total ? Math.round((okN/v.total)*100) : 0;
+    const pctTot = ((v.pallets/totalPallets)*100).toFixed(1);
+    const barW   = Math.round((v.pallets/totalPallets)*100);
+    const badge  = pctOk===100
+      ? `<span style="background:#dcfce7;color:#166534;padding:4px 14px;border-radius:20px;font-size:.85em;font-weight:700">✅ ${pctOk}%</span>`
       : pctOk>=50
-      ? `<span style="background:#fef9c3;color:#854d0e;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">⏳ ${pctOk}%</span>`
-      : `<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">🚚 ${pctOk}%</span>`;
-    return `<tr>
-      <td class="dtd" style="font-weight:700;color:#1a4d4d">${cli}</td>
-      <td class="dtd right">${v.pallets}</td>
-      <td class="dtd right">${v.ocs.size}</td>
-      <td class="dtd right">${v.vol.toFixed(2)}</td>
-      <td class="dtd right">${v.total}</td>
-      <td class="dtd" style="text-align:center">${badge}</td>
+      ? `<span style="background:#fef9c3;color:#854d0e;padding:4px 14px;border-radius:20px;font-size:.85em;font-weight:700">⏳ ${pctOk}%</span>`
+      : `<span style="background:#fee2e2;color:#991b1b;padding:4px 14px;border-radius:20px;font-size:.85em;font-weight:700">🔴 ${pctOk}%</span>`;
+    return `<tr onmouseover="this.style.background='#f0faf6'" onmouseout="this.style.background='white'" style="transition:background .12s;border-bottom:1px solid #eef4f2">
+      <td style="padding:12px 16px;font-weight:700;color:#1a4d4d;font-size:.95em">${i+1}. ${cli}</td>
+      <td style="padding:12px 16px;text-align:right;font-family:monospace;font-weight:700;font-size:.95em">${v.pallets}</td>
+      <td style="padding:12px 16px;text-align:right;font-family:monospace;font-size:.95em">${v.ocs.size}</td>
+      <td style="padding:12px 16px;text-align:right;font-family:monospace;font-size:.95em">${v.vol.toFixed(2)}</td>
+      <td style="padding:12px 16px;text-align:right;font-size:.95em">${v.total}</td>
+      <td style="padding:12px 16px;text-align:right">
+        <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+          <div style="flex:1;background:#e8f0ee;border-radius:4px;height:8px;max-width:90px"><div style="width:${barW}%;background:#2e9e7a;height:8px;border-radius:4px"></div></div>
+          <span style="font-family:monospace;font-weight:700;font-size:.9em;color:#1a4d4d;min-width:36px;text-align:right">${pctTot}%</span>
+        </div>
+      </td>
+      <td style="padding:12px 16px;text-align:center">${badge}</td>
     </tr>`;
   }).join('');
 }
