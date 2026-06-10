@@ -415,13 +415,13 @@ input[type="file"]{display:none;}
           <col style="width:15%">
         </colgroup>
         <thead class="dc-thead"><tr>
-          <th style="padding:13px 18px;text-align:left;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Cliente</th>
-          <th style="padding:13px 18px;text-align:right;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Pallets</th>
-          <th style="padding:13px 18px;text-align:right;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">OC</th>
-          <th style="padding:13px 18px;text-align:right;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Vol. m³</th>
-          <th style="padding:13px 18px;text-align:right;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Despachos</th>
-          <th style="padding:13px 18px;text-align:right;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">% del Total</th>
-          <th style="padding:13px 18px;text-align:center;font-size:.9em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Cumplimiento</th>
+          <th style="padding:15px 20px;text-align:left;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Cliente</th>
+          <th style="padding:15px 20px;text-align:right;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Pallets</th>
+          <th style="padding:15px 20px;text-align:right;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">OC</th>
+          <th style="padding:15px 20px;text-align:right;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Vol. m³</th>
+          <th style="padding:15px 20px;text-align:right;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Despachos</th>
+          <th style="padding:15px 20px;text-align:right;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">% del Total</th>
+          <th style="padding:15px 20px;text-align:center;font-size:1em;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Cumplimiento</th>
         </tr></thead>
         <tbody id="dash-clientes-tbody"></tbody>
       </table>
@@ -1278,23 +1278,23 @@ function renderTablaClientes(data){
     const pctTot = ((v.pallets/totalPallets)*100).toFixed(1);
     const barW   = Math.round((v.pallets/totalPallets)*100);
     const badge  = pctOk===100
-      ? `<span style="background:#dcfce7;color:#166534;padding:6px 16px;border-radius:20px;font-size:1em;font-weight:700">✅ ${pctOk}%</span>`
+      ? `<span style="background:#dcfce7;color:#166534;padding:7px 18px;border-radius:20px;font-size:1.05em;font-weight:700">✅ ${pctOk}%</span>`
       : pctOk>=50
-      ? `<span style="background:#fef9c3;color:#854d0e;padding:6px 16px;border-radius:20px;font-size:1em;font-weight:700">⏳ ${pctOk}%</span>`
-      : `<span style="background:#fee2e2;color:#991b1b;padding:6px 16px;border-radius:20px;font-size:1em;font-weight:700">🔴 ${pctOk}%</span>`;
+      ? `<span style="background:#fef9c3;color:#854d0e;padding:7px 18px;border-radius:20px;font-size:1.05em;font-weight:700">⏳ ${pctOk}%</span>`
+      : `<span style="background:#fee2e2;color:#991b1b;padding:7px 18px;border-radius:20px;font-size:1.05em;font-weight:700">🔴 ${pctOk}%</span>`;
     return `<tr onmouseover="this.style.background='#f0faf6'" onmouseout="this.style.background='white'" style="transition:background .12s;border-bottom:1px solid #eef4f2">
-      <td style="padding:14px 18px;font-weight:700;color:#1a4d4d;font-size:1.05em">${i+1}. ${cli}</td>
-      <td style="padding:14px 18px;text-align:right;font-family:monospace;font-weight:700;font-size:1.1em;color:#1a4d4d">${v.pallets}</td>
-      <td style="padding:14px 18px;text-align:right;font-family:monospace;font-size:1.05em">${v.ocs.size}</td>
-      <td style="padding:14px 18px;text-align:right;font-family:monospace;font-size:1.05em">${v.vol.toFixed(2)}</td>
-      <td style="padding:14px 18px;text-align:right;font-size:1.05em">${v.total}</td>
-      <td style="padding:14px 18px;text-align:right">
+      <td style="padding:16px 20px;font-weight:700;color:#1a4d4d;font-size:1.15em">${i+1}. ${cli}</td>
+      <td style="padding:16px 20px;text-align:right;font-family:monospace;font-weight:700;font-size:1.25em;color:#1a4d4d">${v.pallets}</td>
+      <td style="padding:16px 20px;text-align:right;font-family:monospace;font-size:1.15em">${v.ocs.size}</td>
+      <td style="padding:16px 20px;text-align:right;font-family:monospace;font-size:1.15em">${v.vol.toFixed(2)}</td>
+      <td style="padding:16px 20px;text-align:right;font-size:1.15em">${v.total}</td>
+      <td style="padding:16px 20px;text-align:right">
         <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
-          <div style="flex:1;background:#e8f0ee;border-radius:4px;height:10px;max-width:100px"><div style="width:${barW}%;background:#2e9e7a;height:10px;border-radius:4px"></div></div>
-          <span style="font-family:monospace;font-weight:700;font-size:1em;color:#1a4d4d;min-width:42px;text-align:right">${pctTot}%</span>
+          <div style="flex:1;background:#e8f0ee;border-radius:5px;height:12px;max-width:110px"><div style="width:${barW}%;background:#2e9e7a;height:12px;border-radius:5px"></div></div>
+          <span style="font-family:monospace;font-weight:700;font-size:1.1em;color:#1a4d4d;min-width:48px;text-align:right">${pctTot}%</span>
         </div>
       </td>
-      <td style="padding:14px 18px;text-align:center">${badge}</td>
+      <td style="padding:16px 20px;text-align:center">${badge}</td>
     </tr>`;
   }).join('');
 }
