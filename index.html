@@ -523,56 +523,79 @@ input[type="file"]{display:none;}
     <!-- PANEL DERECHO: RESULTADOS -->
     <div style="display:flex;flex-direction:column;gap:14px" id="cubo-results-panel">
 
-      <!-- KPIs resultado -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-        <div class="d-card"><h3>Pallets Necesarios</h3><p id="res-pallets" style="font-size:2.2em">—</p></div>
-        <div class="d-card"><h3>Altura del Pallet</h3><p id="res-altura" style="font-size:2.2em">—</p><small style="color:rgba(255,255,255,.5)">cm</small></div>
-        <div class="d-card"><h3>Unid. por Pallet</h3><p id="res-por-pallet" style="font-size:2.2em">—</p></div>
-        <div class="d-card"><h3>Unid. último Pallet</h3><p id="res-ultimo" style="font-size:2.2em">—</p></div>
+      <!-- KPIs resultado — 6 cards -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">
+        <div class="d-card"><h3>Pallets</h3><p id="res-pallets" style="font-size:2.4em">—</p></div>
+        <div class="d-card"><h3>Altura Pallet</h3><p id="res-altura" style="font-size:2.4em">—</p><small style="color:rgba(255,255,255,.5)">cm</small></div>
+        <div class="d-card"><h3>Unid./Pallet</h3><p id="res-por-pallet" style="font-size:2.4em">—</p></div>
+        <div class="d-card"><h3>Unid./Capa</h3><p id="res-por-capa" style="font-size:2.4em">—</p></div>
+        <div class="d-card"><h3>Capas/Pallet</h3><p id="res-capas" style="font-size:2.4em">—</p></div>
+        <div class="d-card"><h3>Último Pallet</h3><p id="res-ultimo" style="font-size:2.4em">—</p><small id="res-ultimo-label" style="color:rgba(255,255,255,.45)"></small></div>
       </div>
 
-      <!-- DETALLE DE CAPAS -->
-      <div class="chart-card" id="cubo-detalle" style="display:none">
-        <div class="chart-card-title">📊 Detalle de distribución</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div>
-            <div style="color:rgba(255,255,255,.5);font-size:.75em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
-            <div id="detalle-capa" style="color:white;font-size:.9em;line-height:2"></div>
+      <!-- FILA: detalle + 3D -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+        <!-- DETALLE -->
+        <div class="chart-card" id="cubo-detalle" style="display:none">
+          <div class="chart-card-title">📊 Resumen de cubicación</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
+              <div id="detalle-capa" style="color:white;font-size:.88em;line-height:2.1"></div>
+            </div>
+            <div>
+              <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
+              <div id="detalle-pallet" style="color:white;font-size:.88em;line-height:2.1"></div>
+            </div>
           </div>
-          <div>
-            <div style="color:rgba(255,255,255,.5);font-size:.75em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
-            <div id="detalle-pallet" style="color:white;font-size:.9em;line-height:2"></div>
+          <div id="orient-recomend" style="margin-top:14px;font-size:.88em;color:#a8e6c8;font-weight:600;background:rgba(46,158,122,.15);border-radius:8px;padding:8px 12px"></div>
+        </div>
+
+        <!-- VISTA 3D ISOMÉTRICA -->
+        <div class="chart-card" id="cubo-3d" style="display:none">
+          <div class="chart-card-title">🎲 Vista 3D — Pallet completo</div>
+          <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="color:rgba(255,255,255,.5);font-size:.72em;margin-bottom:6px">Opción A</div>
+              <canvas id="canvas-3d-a" width="240" height="240" style="border-radius:8px"></canvas>
+            </div>
+            <div style="text-align:center" id="wrap-3d-b">
+              <div style="color:rgba(255,255,255,.5);font-size:.72em;margin-bottom:6px">Opción B</div>
+              <canvas id="canvas-3d-b" width="240" height="240" style="border-radius:8px"></canvas>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- VISUALIZACIÓN TOP-DOWN -->
+      <!-- VISTAS TOP-DOWN: A y B siempre visibles -->
       <div class="chart-card" id="cubo-visual" style="display:none">
         <div class="chart-card-title">🔭 Vista superior — distribución en pallet</div>
-        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
-          <div>
-            <div style="color:rgba(255,255,255,.5);font-size:.75em;margin-bottom:8px;text-align:center">Orientación A</div>
-            <canvas id="canvas-vista-a" width="260" height="260" style="border-radius:8px;background:rgba(255,255,255,.05)"></canvas>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div style="text-align:center">
+            <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Opción A <span id="label-a" style="color:#a8e6c8"></span></div>
+            <canvas id="canvas-vista-a" width="300" height="300" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
+            <div id="txt-a" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
           </div>
-          <div id="orient-b-wrap">
-            <div style="color:rgba(255,255,255,.5);font-size:.75em;margin-bottom:8px;text-align:center">Orientación B (rotada 90°)</div>
-            <canvas id="canvas-vista-b" width="260" height="260" style="border-radius:8px;background:rgba(255,255,255,.05)"></canvas>
+          <div style="text-align:center" id="orient-b-wrap">
+            <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Opción B <span id="label-b" style="color:#38bdf8"></span></div>
+            <canvas id="canvas-vista-b" width="300" height="300" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
+            <div id="txt-b" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
           </div>
         </div>
-        <div id="orient-recomend" style="margin-top:12px;font-size:.85em;color:#a8e6c8;font-weight:600"></div>
       </div>
 
       <!-- TABLA RESUMEN POR PALLET -->
       <div class="chart-card" id="cubo-tabla" style="display:none">
         <div class="chart-card-title">📋 Resumen por pallet</div>
-        <table style="width:100%;border-collapse:collapse;font-size:.88em">
+        <table style="width:100%;border-collapse:collapse;font-size:.9em">
           <thead>
             <tr style="border-bottom:1px solid rgba(255,255,255,.15)">
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:left">Pallet N°</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Unidades</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Capas</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Altura (cm)</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Ocupación</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:left">Pallet N°</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Unidades</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Capas</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Altura total (cm)</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Ocupación</th>
             </tr>
           </thead>
           <tbody id="cubo-tabla-body"></tbody>
@@ -582,7 +605,7 @@ input[type="file"]{display:none;}
       <!-- ESTADO VACÍO -->
       <div id="cubo-empty" class="chart-card" style="text-align:center;padding:50px">
         <div style="font-size:3em">📦</div>
-        <div style="color:rgba(255,255,255,.6);margin-top:12px;font-size:.95em">Selecciona pallet, producto, altura y cantidad<br>luego presiona <strong>Calcular</strong></div>
+        <div style="color:rgba(255,255,255,.6);margin-top:12px;font-size:.95em">Selecciona pallet, producto, altura y cantidad<br>luego presiona <strong>Calcular Cubicación</strong></div>
       </div>
     </div>
 
@@ -1659,7 +1682,11 @@ function calcCubicacion(){
   document.getElementById('res-pallets').textContent    = totalPallets;
   document.getElementById('res-altura').textContent     = altPalletCm;
   document.getElementById('res-por-pallet').textContent = porPallet;
+  document.getElementById('res-por-capa').textContent   = porCapa;
+  document.getElementById('res-capas').textContent      = capasPorPallet;
   document.getElementById('res-ultimo').textContent     = unidUltimo === porPallet ? porPallet : unidUltimo;
+  const ultimoLabel = document.getElementById('res-ultimo-label');
+  if(ultimoLabel) ultimoLabel.textContent = resto > 0 ? `(${capasUltimo} capas)` : 'completo';
   document.getElementById('cubo-empty').style.display   = 'none';
 
   // ── Detalle ──
@@ -1705,24 +1732,42 @@ function calcCubicacion(){
   document.getElementById('cubo-tabla-body').innerHTML = tablaHTML;
   document.getElementById('cubo-tabla').style.display = 'block';
 
-  // ── Dibujar vistas ──
+  // ── Dibujar vistas 2D top-down ──
   if(mejor.mix){
     drawVistaMix('canvas-vista-a', pal, pro, mejor.layout);
     drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
-    document.getElementById('orient-b-wrap').style.display = 'block';
+    document.getElementById('label-a').textContent = `— Mixta A+B ✅ ÓPTIMA (${mejor.porCapa} uds)`;
+    document.getElementById('label-b').textContent = `— Rotada (${porCapaB} uds)`;
+    document.getElementById('txt-a').textContent   = `Mixta: ${mejor.porCapa} unidades/capa`;
+    document.getElementById('txt-b').textContent   = `Rotada: ${porCapaB} unidades/capa`;
     document.getElementById('orient-recomend').textContent =
-      `✅ Orientación mixta (A+B) → ${porCapa} unidades por capa — MÁXIMO APROVECHAMIENTO`;
+      `✅ Orientación mixta A+B → ${porCapa} unidades por capa — MÁXIMO APROVECHAMIENTO`;
   } else {
-    drawVista('canvas-vista-a', pal, pro, mejor.filas, mejor.cols, mejor.rotado);
-    drawVista('canvas-vista-b', pal, pro,
-      mejor.rotado ? filaA : filaB,
-      mejor.rotado ? colA  : colB,
-      !mejor.rotado);
-    document.getElementById('orient-b-wrap').style.display = 'block';
+    drawVista('canvas-vista-a', pal, pro, filaA, colA, false);
+    drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
+    const labelA = `— Normal (${porCapaA} uds)${porCapaA>=porCapaB?' ✅ ÓPTIMA':''}`;
+    const labelB = `— Rotada 90° (${porCapaB} uds)${porCapaB>porCapaA?' ✅ ÓPTIMA':''}`;
+    document.getElementById('label-a').textContent = labelA;
+    document.getElementById('label-b').textContent = labelB;
+    document.getElementById('txt-a').textContent   = `${filaA}×${colA} = ${porCapaA} uds/capa`;
+    document.getElementById('txt-b').textContent   = `${filaB}×${colB} = ${porCapaB} uds/capa`;
     document.getElementById('orient-recomend').textContent =
       `✅ Orientación recomendada: ${mejor.nombre} → ${porCapa} unidades por capa`;
   }
-  document.getElementById('cubo-visual').style.display = 'block';
+  document.getElementById('orient-b-wrap').style.display = 'block';
+  document.getElementById('cubo-visual').style.display   = 'block';
+
+  // ── Dibujar vista 3D ──
+  const capas3D = Math.min(capasPorPallet, 6); // máx 6 capas visibles en 3D
+  if(mejor.mix){
+    draw3DMix('canvas-3d-a', pal, pro, mejor.layout, capas3D, altMM);
+    draw3D('canvas-3d-b', pal, pro, filaB, colB, true, capas3D, altMM);
+  } else {
+    draw3D('canvas-3d-a', pal, pro, filaA, colA, false, capas3D, altMM);
+    draw3D('canvas-3d-b', pal, pro, filaB, colB, true, capas3D, altMM);
+  }
+  document.getElementById('wrap-3d-b').style.display = 'block';
+  document.getElementById('cubo-3d').style.display   = 'block';
 }
 
 function drawVista(canvasId, pal, pro, filas, cols, rotado){
@@ -1820,6 +1865,125 @@ function drawVistaMix(canvasId, pal, pro, layout){
   ctx.fillStyle='rgba(56,189,248,.8)'; ctx.fillRect(offX+65,offY+pal.l*scale+22,10,10);
   ctx.fillStyle='rgba(255,255,255,.6)';
   ctx.fillText('Rotada',offX+78,offY+pal.l*scale+31);
+}
+
+// ══════════════════════════════════════════════
+//  VISTA 3D ISOMÉTRICA
+// ══════════════════════════════════════════════
+function draw3D(canvasId, pal, pro, filas, cols, rotado, numCapas, altMM){
+  const canvas = document.getElementById(canvasId); if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0,0,CW,CH);
+
+  const pW = rotado ? pro.l : pro.w;
+  const pL = rotado ? pro.w : pro.l;
+
+  // Escala isométrica
+  const maxDim = Math.max(pal.w, pal.l);
+  const sc = Math.min((CW-20)/maxDim * 0.55, (CH-60)/maxDim * 0.55);
+  const isoX = (x,y) => CW/2 + (x - y) * sc * 0.866;
+  const isoY = (x,y,z) => CH*0.72 - (x + y) * sc * 0.5 - z * (altMM/pal.w) * sc * 12;
+
+  // Dibujar pallet base
+  const palW = pal.w, palL = pal.l, palH = 80; // mm base
+  drawIsoBox(ctx, isoX, isoY, 0, 0, -palH, palW, palL, palH,
+    'rgba(139,90,43,.9)','rgba(100,60,20,.9)','rgba(120,75,30,.9)');
+
+  // Dibujar capas de productos
+  for(let capa=0; capa<numCapas; capa++){
+    const zBase = capa * altMM;
+    for(let f=0; f<filas; f++){
+      for(let c=0; c<cols; c++){
+        const x0 = f * pW;
+        const y0 = c * pL;
+        const hue = 160 + f*15 + capa*8;
+        const bright = Math.max(35, 50 - capa*4);
+        const topC   = `hsla(${hue},55%,${bright+12}%,.92)`;
+        const rightC = `hsla(${hue},55%,${bright}%,.92)`;
+        const frontC = `hsla(${hue},55%,${bright+6}%,.92)`;
+        drawIsoBox(ctx, isoX, isoY, x0, y0, zBase, pW-3, pL-3, altMM-2, topC, rightC, frontC);
+      }
+    }
+  }
+
+  // Etiqueta
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`${filas}×${cols} = ${filas*cols} uds/capa · ${numCapas} capas`, CW/2, CH-6);
+}
+
+function draw3DMix(canvasId, pal, pro, layout, numCapas, altMM){
+  const canvas = document.getElementById(canvasId); if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0,0,CW,CH);
+
+  const sc = Math.min((CW-20)/pal.w*0.55, (CH-60)/pal.l*0.55);
+  const isoX = (x,y) => CW/2 + (x - y) * sc * 0.866;
+  const isoY = (x,y,z) => CH*0.72 - (x + y) * sc * 0.5 - z * (altMM/pal.w) * sc * 12;
+
+  // Base pallet
+  drawIsoBox(ctx, isoX, isoY, 0, 0, -80, pal.w, pal.l, 80,
+    'rgba(139,90,43,.9)','rgba(100,60,20,.9)','rgba(120,75,30,.9)');
+
+  for(let capa=0; capa<numCapas; capa++){
+    const z = capa * altMM;
+    let n=0;
+    // Zona A
+    if(layout.tipo==='H'){
+      for(let f=0;f<layout.filaA;f++) for(let c=0;c<layout.colA;c++){
+        drawIsoBox(ctx,isoX,isoY, f*pro.w, c*pro.l, z, pro.w-3, pro.l-3, altMM-2,
+          `hsla(160,55%,${46-capa*4}%,.92)`,`hsla(160,55%,${34-capa*4}%,.92)`,`hsla(160,55%,${40-capa*4}%,.92)`);
+      }
+      const xB = layout.anchoZonaA;
+      for(let f=0;f<layout.colBenZonaB;f++) for(let c=0;c<layout.filaBenZonaB;c++){
+        drawIsoBox(ctx,isoX,isoY, xB+f*pro.l, c*pro.w, z, pro.l-3, pro.w-3, altMM-2,
+          `hsla(200,60%,${46-capa*4}%,.92)`,`hsla(200,60%,${34-capa*4}%,.92)`,`hsla(200,60%,${40-capa*4}%,.92)`);
+      }
+    } else {
+      for(let f=0;f<layout.filaA;f++) for(let c=0;c<layout.colA;c++){
+        drawIsoBox(ctx,isoX,isoY, f*pro.w, c*pro.l, z, pro.w-3, pro.l-3, altMM-2,
+          `hsla(160,55%,${46-capa*4}%,.92)`,`hsla(160,55%,${34-capa*4}%,.92)`,`hsla(160,55%,${40-capa*4}%,.92)`);
+      }
+      const yB = layout.largoZonaA;
+      for(let f=0;f<layout.filaBenZonaB2;f++) for(let c=0;c<layout.colBenZonaB2;c++){
+        drawIsoBox(ctx,isoX,isoY, f*pro.l, yB+c*pro.w, z, pro.l-3, pro.w-3, altMM-2,
+          `hsla(200,60%,${46-capa*4}%,.92)`,`hsla(200,60%,${34-capa*4}%,.92)`,`hsla(200,60%,${40-capa*4}%,.92)`);
+      }
+    }
+  }
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`Mixta A+B · ${numCapas} capas`, CW/2, CH-6);
+}
+
+function drawIsoBox(ctx, isoX, isoY, x, y, z, w, l, h, topC, rightC, frontC){
+  // TOP face
+  ctx.beginPath();
+  ctx.moveTo(isoX(x,y,z+h),    isoY(x,y,z+h));
+  ctx.lineTo(isoX(x+w,y,z+h),  isoY(x+w,y,z+h));
+  ctx.lineTo(isoX(x+w,y+l,z+h),isoY(x+w,y+l,z+h));
+  ctx.lineTo(isoX(x,y+l,z+h),  isoY(x,y+l,z+h));
+  ctx.closePath();
+  ctx.fillStyle=topC; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=.5; ctx.stroke();
+
+  // RIGHT face
+  ctx.beginPath();
+  ctx.moveTo(isoX(x+w,y,z),    isoY(x+w,y,z));
+  ctx.lineTo(isoX(x+w,y+l,z),  isoY(x+w,y+l,z));
+  ctx.lineTo(isoX(x+w,y+l,z+h),isoY(x+w,y+l,z+h));
+  ctx.lineTo(isoX(x+w,y,z+h),  isoY(x+w,y,z+h));
+  ctx.closePath();
+  ctx.fillStyle=rightC; ctx.fill(); ctx.stroke();
+
+  // FRONT face
+  ctx.beginPath();
+  ctx.moveTo(isoX(x,y+l,z),    isoY(x,y+l,z));
+  ctx.lineTo(isoX(x+w,y+l,z),  isoY(x+w,y+l,z));
+  ctx.lineTo(isoX(x+w,y+l,z+h),isoY(x+w,y+l,z+h));
+  ctx.lineTo(isoX(x,y+l,z+h),  isoY(x,y+l,z+h));
+  ctx.closePath();
+  ctx.fillStyle=frontC; ctx.fill(); ctx.stroke();
 }
 
 // ══════════════════════════════════════════════
