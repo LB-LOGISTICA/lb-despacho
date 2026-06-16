@@ -1582,28 +1582,59 @@ function setQty(v){
 // ── CÁLCULO PRINCIPAL ──
 function calcCubicacion(){
   const qty = parseInt(document.getElementById('cubo-qty').value)||0;
-  if(!qty){ return; }
+  if(!qty) return;
   cuboState.qty = qty;
 
-  const pal = PALLETS[cuboState.pallet];
-  const pro = PRODUCTOS[cuboState.prod];
+  const pal   = PALLETS[cuboState.pallet];
+  const pro   = PRODUCTOS[cuboState.prod];
   const altMM = cuboState.altura;
 
-  // Calcular cuántos caben por capa en orientación A (sin rotar)
-  const filaA = Math.floor(pal.w / pro.w);
-  const colA  = Math.floor(pal.l / pro.l);
+  // ── Orientación pura A (normal) ──
+  const filaA    = Math.floor(pal.w / pro.w);
+  const colA     = Math.floor(pal.l / pro.l);
   const porCapaA = filaA * colA;
 
-  // Orientación B (rotado 90°)
-  const filaB = Math.floor(pal.w / pro.l);
-  const colB  = Math.floor(pal.l / pro.w);
+  // ── Orientación pura B (rotado 90°) ──
+  const filaB    = Math.floor(pal.w / pro.l);
+  const colB     = Math.floor(pal.l / pro.w);
   const porCapaB = filaB * colB;
 
-  // Usar la mejor orientación
-  const mejorOrient = porCapaA >= porCapaB ? 'A' : 'B';
-  const filas  = mejorOrient==='A' ? filaA : filaB;
-  const cols   = mejorOrient==='A' ? colA  : colB;
-  const porCapa = Math.max(porCapaA, porCapaB);
+  // ── Combinación MIXTA: mitad A + mitad B (ej: 305x610 → 4 uds cuadrado) ──
+  // Zona A ocupa filaA*pro.w de ancho → zona B usa el ancho restante
+  let porCapaMix = 0, mixLayout = null;
+  if(pro.w !== pro.l){ // solo tiene sentido si el producto NO es cuadrado
+    // Combinación horizontal: columnas A + columnas B en el largo del pallet
+    const anchoZonaA = filaA * pro.w;
+    const anchoZonaB = pal.w - anchoZonaA;
+    const colBenZonaB = Math.floor(anchoZonaB / pro.l);
+    const filaBenZonaB = Math.floor(pal.l / pro.w);
+    const mixH = filaA * colA + colBenZonaB * filaBenZonaB;
+
+    // Combinación vertical: filas A + filas B en el ancho del pallet
+    const largoZonaA = colA * pro.l;
+    const largoZonaB = pal.l - largoZonaA;
+    const filaBenZonaB2 = Math.floor(pal.w / pro.l);
+    const colBenZonaB2  = Math.floor(largoZonaB / pro.w);
+    const mixV = filaA * colA + filaBenZonaB2 * colBenZonaB2;
+
+    if(mixH > porCapaMix){
+      porCapaMix = mixH;
+      mixLayout = { tipo:'H', filaA, colA, anchoZonaA, colBenZonaB, filaBenZonaB };
+    }
+    if(mixV > porCapaMix){
+      porCapaMix = mixV;
+      mixLayout = { tipo:'V', filaA, colA, largoZonaA, filaBenZonaB2, colBenZonaB2 };
+    }
+  }
+
+  // ── Elegir la mejor opción ──
+  const opciones = [
+    { nombre:'Normal (A)', porCapa: porCapaA, filas: filaA, cols: colA, rotado: false, mix: false },
+    { nombre:'Rotada 90° (B)', porCapa: porCapaB, filas: filaB, cols: colB, rotado: true, mix: false },
+    ...(porCapaMix > 0 ? [{ nombre:'Mixta (A+B)', porCapa: porCapaMix, mix: true, layout: mixLayout }] : [])
+  ];
+  const mejor = opciones.reduce((a,b)=>b.porCapa>a.porCapa?b:a);
+  const porCapa = mejor.porCapa;
 
   if(porCapa === 0){
     document.getElementById('cubo-empty').style.display='block';
@@ -1612,41 +1643,47 @@ function calcCubicacion(){
     return;
   }
 
-  // Capas por pallet (altura máxima pallet ~180cm total, base 14cm → 166cm útiles)
-  const maxAltUtil = 1660; // mm
+  // ── Cálculo de capas y pallets ──
+  const maxAltUtil    = 1660; // mm útiles (180cm total - 14cm base)
   const capasPorPallet = Math.floor(maxAltUtil / altMM);
-  const porPallet = porCapa * capasPorPallet;
-
-  // Cuántos pallets completos y el último
+  const porPallet      = porCapa * capasPorPallet;
   const palletsCompletos = Math.floor(qty / porPallet);
-  const resto = qty % porPallet;
-  const totalPallets = palletsCompletos + (resto > 0 ? 1 : 0);
-  const capasUltimo = resto > 0 ? Math.ceil(resto / porCapa) : capasPorPallet;
-  const unidUltimo  = resto > 0 ? resto : porPallet;
-  const altPalletCm = +(PALLET_BASE_H + (capasPorPallet * altMM)/10).toFixed(1);
-  const altUltimoCm = +(PALLET_BASE_H + (capasUltimo * altMM)/10).toFixed(1);
+  const resto            = qty % porPallet;
+  const totalPallets     = palletsCompletos + (resto > 0 ? 1 : 0);
+  const capasUltimo      = resto > 0 ? Math.ceil(resto / porCapa) : capasPorPallet;
+  const unidUltimo       = resto > 0 ? resto : porPallet;
+  const altPalletCm      = +(PALLET_BASE_H + (capasPorPallet * altMM)/10).toFixed(1);
+  const altUltimoCm      = +(PALLET_BASE_H + (capasUltimo * altMM)/10).toFixed(1);
 
-  // KPIs
+  // ── KPIs ──
   document.getElementById('res-pallets').textContent    = totalPallets;
   document.getElementById('res-altura').textContent     = altPalletCm;
   document.getElementById('res-por-pallet').textContent = porPallet;
-  document.getElementById('res-ultimo').textContent     = unidUltimo===porPallet ? porPallet : unidUltimo;
+  document.getElementById('res-ultimo').textContent     = unidUltimo === porPallet ? porPallet : unidUltimo;
   document.getElementById('cubo-empty').style.display   = 'none';
 
-  // Detalle
+  // ── Detalle ──
+  const orientLabel = mejor.mix
+    ? `Mixta A+B <span style="background:#facc15;color:#1a2e2a;border-radius:10px;padding:1px 8px;font-size:.8em">ÓPTIMA</span>`
+    : mejor.rotado ? 'Rotada 90° (B) ✅' : 'Normal (A) ✅';
+
+  const filasLabel = mejor.mix
+    ? `${mejor.layout.filaA}×${mejor.layout.colA} + zona B`
+    : `${mejor.filas} × ${mejor.cols}`;
+
   document.getElementById('detalle-capa').innerHTML = `
-    <div>📐 Orientación: <strong>${mejorOrient==='A'?'Normal':'Rotada 90°'} ✅</strong></div>
-    <div>↔ Filas × columnas: <strong>${filas} × ${cols}</strong></div>
-    <div>📦 Unidades por capa: <strong>${porCapa}</strong></div>
+    <div>📐 Orientación: <strong>${orientLabel}</strong></div>
+    <div>↔ Distribución: <strong>${filasLabel}</strong></div>
+    <div>📦 Unidades por capa: <strong style="font-size:1.2em;color:#a8e6c8">${porCapa}</strong></div>
     <div>📏 Altura por capa: <strong>${altMM} mm</strong></div>`;
   document.getElementById('detalle-pallet').innerHTML = `
     <div>🔢 Capas por pallet: <strong>${capasPorPallet}</strong></div>
-    <div>📦 Unid. por pallet: <strong>${porPallet}</strong></div>
+    <div>📦 Unid. por pallet: <strong style="font-size:1.2em;color:#a8e6c8">${porPallet}</strong></div>
     <div>📏 Altura total: <strong>${altPalletCm} cm</strong></div>
     <div>🪵 Base pallet: <strong>${PALLET_BASE_H} cm</strong></div>`;
   document.getElementById('cubo-detalle').style.display = 'block';
 
-  // Tabla por pallet
+  // ── Tabla por pallet ──
   let tablaHTML = '';
   for(let i=1;i<=totalPallets;i++){
     const esUltimo = i===totalPallets && resto>0;
@@ -1668,12 +1705,24 @@ function calcCubicacion(){
   document.getElementById('cubo-tabla-body').innerHTML = tablaHTML;
   document.getElementById('cubo-tabla').style.display = 'block';
 
-  // Dibujar vista superior
-  drawVista('canvas-vista-a', pal, pro, filaA, colA, false);
-  drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
-  document.getElementById('orient-recomend').textContent =
-    `✅ Orientación recomendada: ${mejorOrient==='A'?'Normal (A)':'Rotada 90° (B)'} → ${porCapa} unidades por capa`;
-  document.getElementById('cubo-visual').style.display  = 'block';
+  // ── Dibujar vistas ──
+  if(mejor.mix){
+    drawVistaMix('canvas-vista-a', pal, pro, mejor.layout);
+    drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
+    document.getElementById('orient-b-wrap').style.display = 'block';
+    document.getElementById('orient-recomend').textContent =
+      `✅ Orientación mixta (A+B) → ${porCapa} unidades por capa — MÁXIMO APROVECHAMIENTO`;
+  } else {
+    drawVista('canvas-vista-a', pal, pro, mejor.filas, mejor.cols, mejor.rotado);
+    drawVista('canvas-vista-b', pal, pro,
+      mejor.rotado ? filaA : filaB,
+      mejor.rotado ? colA  : colB,
+      !mejor.rotado);
+    document.getElementById('orient-b-wrap').style.display = 'block';
+    document.getElementById('orient-recomend').textContent =
+      `✅ Orientación recomendada: ${mejor.nombre} → ${porCapa} unidades por capa`;
+  }
+  document.getElementById('cubo-visual').style.display = 'block';
 }
 
 function drawVista(canvasId, pal, pro, filas, cols, rotado){
@@ -1685,50 +1734,92 @@ function drawVista(canvasId, pal, pro, filas, cols, rotado){
 
   const pW = rotado ? pro.l : pro.w;
   const pL = rotado ? pro.w : pro.l;
-  const scaleX = (CW-40) / pal.w;
-  const scaleY = (CH-40) / pal.l;
-  const scale  = Math.min(scaleX, scaleY);
-  const offX = (CW - pal.w*scale)/2;
-  const offY = (CH - pal.l*scale)/2;
+  const scale = Math.min((CW-40)/pal.w, (CH-40)/pal.l);
+  const offX  = (CW - pal.w*scale)/2;
+  const offY  = (CH - pal.l*scale)/2;
 
-  // Pallet fondo
-  ctx.fillStyle = 'rgba(139,90,43,.4)';
-  ctx.strokeStyle = 'rgba(139,90,43,.8)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(offX, offY, pal.w*scale, pal.l*scale, 6);
-  ctx.fill(); ctx.stroke();
+  // Fondo pallet
+  ctx.fillStyle='rgba(139,90,43,.4)'; ctx.strokeStyle='rgba(139,90,43,.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(offX,offY,pal.w*scale,pal.l*scale,6); ctx.fill(); ctx.stroke();
 
   // Productos
-  for(let f=0;f<filas;f++){
-    for(let c=0;c<cols;c++){
-      const x = offX + f*pW*scale;
-      const y = offY + c*pL*scale;
-      const w = pW*scale - 2;
-      const h = pL*scale - 2;
-      ctx.fillStyle = `hsla(${160+f*15},60%,45%,.75)`;
-      ctx.strokeStyle = 'rgba(255,255,255,.3)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(x+1, y+1, w, h, 3);
-      ctx.fill(); ctx.stroke();
-      // Número
-      if(w>18 && h>12){
-        ctx.fillStyle = 'rgba(255,255,255,.9)';
-        ctx.font = `bold ${Math.min(11,w/2.5)}px Segoe UI`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(f*cols+c+1, x+w/2+1, y+h/2+1);
-      }
+  for(let f=0;f<filas;f++) for(let c=0;c<cols;c++){
+    const x=offX+f*pW*scale, y=offY+c*pL*scale, w=pW*scale-2, h=pL*scale-2;
+    ctx.fillStyle=`hsla(${160+f*18},60%,45%,.8)`; ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(x+1,y+1,w,h,3); ctx.fill(); ctx.stroke();
+    if(w>16&&h>12){
+      ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font=`bold ${Math.min(12,w/2.5)}px Segoe UI`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(f*cols+c+1, x+w/2+1, y+h/2+1);
+    }
+  }
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`${pal.w}×${pal.l} mm`, CW/2, offY-6);
+  ctx.fillText(`${filas}×${cols} = ${filas*cols} uds/capa`, CW/2, offY+pal.l*scale+14);
+}
+
+function drawVistaMix(canvasId, pal, pro, layout){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0,0,CW,CH);
+
+  const scale = Math.min((CW-40)/pal.w, (CH-40)/pal.l);
+  const offX  = (CW - pal.w*scale)/2;
+  const offY  = (CH - pal.l*scale)/2;
+
+  // Fondo pallet
+  ctx.fillStyle='rgba(139,90,43,.4)'; ctx.strokeStyle='rgba(139,90,43,.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(offX,offY,pal.w*scale,pal.l*scale,6); ctx.fill(); ctx.stroke();
+
+  let n=1;
+  if(layout.tipo==='H'){
+    // Zona A: filaA x colA en normal
+    for(let f=0;f<layout.filaA;f++) for(let c=0;c<layout.colA;c++){
+      const x=offX+f*pro.w*scale, y=offY+c*pro.l*scale, w=pro.w*scale-2, h=pro.l*scale-2;
+      ctx.fillStyle='rgba(46,158,122,.8)'; ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.roundRect(x+1,y+1,w,h,3); ctx.fill(); ctx.stroke();
+      if(w>16&&h>12){ ctx.fillStyle='white'; ctx.font=`bold ${Math.min(12,w/2)}px Segoe UI`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n++,x+w/2+1,y+h/2+1); }
+    }
+    // Zona B: rotadas en el espacio sobrante
+    const xStartB = offX + layout.anchoZonaA*scale;
+    for(let f=0;f<layout.colBenZonaB;f++) for(let c=0;c<layout.filaBenZonaB;c++){
+      const x=xStartB+f*pro.l*scale, y=offY+c*pro.w*scale, w=pro.l*scale-2, h=pro.w*scale-2;
+      ctx.fillStyle='rgba(56,189,248,.8)'; ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.roundRect(x+1,y+1,w,h,3); ctx.fill(); ctx.stroke();
+      if(w>16&&h>12){ ctx.fillStyle='white'; ctx.font=`bold ${Math.min(12,w/2)}px Segoe UI`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n++,x+w/2+1,y+h/2+1); }
+    }
+  } else {
+    // Zona A normal
+    for(let f=0;f<layout.filaA;f++) for(let c=0;c<layout.colA;c++){
+      const x=offX+f*pro.w*scale, y=offY+c*pro.l*scale, w=pro.w*scale-2, h=pro.l*scale-2;
+      ctx.fillStyle='rgba(46,158,122,.8)'; ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.roundRect(x+1,y+1,w,h,3); ctx.fill(); ctx.stroke();
+      if(w>16&&h>12){ ctx.fillStyle='white'; ctx.font=`bold ${Math.min(12,w/2)}px Segoe UI`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n++,x+w/2+1,y+h/2+1); }
+    }
+    // Zona B rotadas bajo zona A
+    const yStartB = offY + layout.largoZonaA*scale;
+    for(let f=0;f<layout.filaBenZonaB2;f++) for(let c=0;c<layout.colBenZonaB2;c++){
+      const x=offX+f*pro.l*scale, y=yStartB+c*pro.w*scale, w=pro.l*scale-2, h=pro.w*scale-2;
+      ctx.fillStyle='rgba(56,189,248,.8)'; ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.roundRect(x+1,y+1,w,h,3); ctx.fill(); ctx.stroke();
+      if(w>16&&h>12){ ctx.fillStyle='white'; ctx.font=`bold ${Math.min(12,w/2)}px Segoe UI`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n++,x+w/2+1,y+h/2+1); }
     }
   }
 
-  // Dimensión pallet
-  ctx.fillStyle = 'rgba(255,255,255,.5)';
-  ctx.font = '10px Segoe UI';
-  ctx.textAlign = 'center';
-  ctx.fillText(`${pal.w}×${pal.l} mm`, CW/2, offY-6);
-  ctx.fillText(`${filas}×${cols} = ${filas*cols} uds/capa`, CW/2, offY+pal.l*scale+14);
+  // Leyenda
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`${pal.w}×${pal.l} mm — Mixta A+B`, CW/2, offY-6);
+  ctx.fillText(`${n-1} uds/capa`, CW/2, offY+pal.l*scale+14);
+
+  // Leyenda colores
+  ctx.fillStyle='rgba(46,158,122,.8)'; ctx.fillRect(offX, offY+pal.l*scale+22, 10,10);
+  ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='9px Segoe UI'; ctx.textAlign='left';
+  ctx.fillText('Normal',offX+13,offY+pal.l*scale+31);
+  ctx.fillStyle='rgba(56,189,248,.8)'; ctx.fillRect(offX+65,offY+pal.l*scale+22,10,10);
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.fillText('Rotada',offX+78,offY+pal.l*scale+31);
 }
 
 // ══════════════════════════════════════════════
