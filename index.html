@@ -438,20 +438,30 @@ input[type="file"]{display:none;}
 <div class="modal-overlay" id="modal-despacho">
   <div class="modal">
     <h2 id="despacho-modal-title">🚚 Nuevo Despacho</h2>
+
+    <!-- BOTÓN PEGAR DESDE CORREO -->
+    <div style="background:#f0faf6;border:1.5px dashed #2e9e7a;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:.85em;font-weight:700;color:#1a4d4d">📋 ¿Tienes la tabla del correo?</div>
+        <div style="font-size:.78em;color:#6a8a80;margin-top:2px">Pega el contenido y se llena automático</div>
+      </div>
+      <button class="btn btn-primary" style="white-space:nowrap" onclick="openPasteModal()">📋 Pegar desde correo</button>
+    </div>
+
     <div class="form-grid">
       <div class="section-label">Identificación</div>
       <div class="form-group"><label>Cliente</label><input id="d-cliente" placeholder="Nombre del cliente"></div>
       <div class="form-group"><label>OF (Orden de Fabricación)</label><input id="d-of" placeholder="Ej: OF-2025-001"></div>
       <div class="form-group"><label>OC (Orden de Compra)</label><input id="d-oc" placeholder="Ej: OC-20250528"></div>
-      <div class="form-group"><label>Descripción 1</label><input id="d-desc1" placeholder="Ej: TPU-COI-Laripur 8025/25Kg"></div>
-      <div class="form-group full"><label>Descripción 2</label><input id="d-desc2" placeholder="Ej: MP/IMPU/TPU-COI"></div>
+      <div class="form-group"><label>Descripción 1</label><input id="d-desc1" placeholder="Ej: 305X610x50/25X70"></div>
+      <div class="form-group full"><label>Descripción 2</label><input id="d-desc2" placeholder="Ej: ST-SLOT--Y-LOK-60"></div>
     </div>
     <div style="height:10px"></div>
     <div class="form-grid-3">
       <div class="section-label" style="grid-column:1/-1">Producto y Logística</div>
       <div class="form-group"><label>Cantidad (un)</label><input id="d-cant" type="number" min="0" placeholder="0"></div>
       <div class="form-group"><label>Peso Pallet (kg)</label><input id="d-peso" type="number" min="0" placeholder="0"></div>
-      <div class="form-group"><label>Dimensión Pallet (LxAxH cm)</label><input id="d-dim" placeholder="Ej: 120x80x150" oninput="calcVolumen()"></div>
+      <div class="form-group"><label>Dimensión Pallet (LxAxH cm)</label><input id="d-dim" placeholder="Ej: 95x95x120" oninput="calcVolumen()"></div>
       <div class="form-group"><label>Volumen m³</label><input id="d-vol" readonly placeholder="Auto…" style="background:#f9fcfb;font-weight:700;color:#1a4d4d"></div>
       <div class="form-group"><label>Cant. Pallets</label><input id="d-pallets" type="number" min="0" placeholder="0"></div>
       <div class="form-group"><label>Estado</label>
@@ -472,6 +482,25 @@ input[type="file"]{display:none;}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeDespachoModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveDespacho()">💾 Guardar Despacho</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PEGAR DESDE CORREO ══ -->
+<div class="modal-overlay" id="modal-paste" style="z-index:600">
+  <div class="modal" style="max-width:560px">
+    <h2>📋 Pegar tabla del correo</h2>
+    <p style="font-size:.85em;color:#6a8a80;margin-bottom:14px">Copia la tabla del correo (Cliente, OF, OC, SKU, Descripción 1, Descripción 2, Cantidad, Peso pallet, Dimensión pallet) y pégala aquí:</p>
+    <textarea id="paste-area" style="width:100%;height:200px;border:1.5px dashed #2e9e7a;border-radius:12px;padding:12px;font-size:.85em;font-family:inherit;outline:none;resize:vertical;color:#1a2e2a" placeholder="Ctrl+V aquí para pegar la tabla del correo…"></textarea>
+    <!-- PREVIEW -->
+    <div id="paste-preview" style="display:none;margin-top:14px">
+      <div style="font-size:.78em;font-weight:700;color:#1a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">✅ Datos detectados:</div>
+      <div style="background:#f0faf6;border-radius:10px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:.84em" id="paste-preview-content"></div>
+    </div>
+    <div id="paste-error" style="display:none;background:#fee2e2;border-radius:10px;padding:10px 14px;font-size:.84em;color:#991b1b;margin-top:10px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closePasteModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-apply-paste" style="display:none" onclick="applyPaste()">✅ Llenar formulario</button>
     </div>
   </div>
 </div>
@@ -1297,6 +1326,145 @@ function renderTablaClientes(data){
       <td style="padding:16px 20px;text-align:center">${badge}</td>
     </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  PEGAR DESDE CORREO
+// ══════════════════════════════════════════════
+let _parsedPaste = null;
+
+function openPasteModal(){
+  _parsedPaste = null;
+  document.getElementById('paste-area').value = '';
+  document.getElementById('paste-preview').style.display = 'none';
+  document.getElementById('paste-error').style.display = 'none';
+  document.getElementById('btn-apply-paste').style.display = 'none';
+  document.getElementById('modal-paste').classList.add('open');
+  setTimeout(()=>document.getElementById('paste-area').focus(), 100);
+}
+
+function closePasteModal(){
+  document.getElementById('modal-paste').classList.remove('open');
+}
+
+// Detectar y parsear tabla pegada
+document.addEventListener('DOMContentLoaded', ()=>{
+  const area = document.getElementById('paste-area');
+  if(area) area.addEventListener('input', parsePasteArea);
+});
+
+// También escuchar paste directo
+setTimeout(()=>{
+  const area = document.getElementById('paste-area');
+  if(area){
+    area.addEventListener('paste', ()=>setTimeout(parsePasteArea, 50));
+    area.addEventListener('input', parsePasteArea);
+  }
+}, 500);
+
+function parsePasteArea(){
+  const raw = document.getElementById('paste-area').value.trim();
+  const errEl = document.getElementById('paste-error');
+  const prevEl = document.getElementById('paste-preview');
+  const btnEl = document.getElementById('btn-apply-paste');
+  if(!raw){ prevEl.style.display='none'; errEl.style.display='none'; btnEl.style.display='none'; return; }
+
+  // Mapeo de etiquetas del correo → campos internos
+  const MAP = {
+    'cliente':          'cliente',
+    'client':           'cliente',
+    'of':               'of',
+    'orden de fabricacion': 'of',
+    'orden de fabricación': 'of',
+    'oc':               'oc',
+    'orden de compra':  'oc',
+    'sku':              'sku',
+    'descripcion 1':    'desc1',
+    'descripción 1':    'desc1',
+    'descripcion1':     'desc1',
+    'descripción1':     'desc1',
+    'descripcion 2':    'desc2',
+    'descripción 2':    'desc2',
+    'descripcion2':     'desc2',
+    'descripción2':     'desc2',
+    'cantidad [un]':    'cant',
+    'cantidad (un)':    'cant',
+    'cantidad':         'cant',
+    'peso pallet [kg]': 'peso',
+    'peso pallet (kg)': 'peso',
+    'peso pallet':      'peso',
+    'peso':             'peso',
+    'dimension pallet': 'dim',
+    'dimensión pallet': 'dim',
+    'dim pallet':       'dim',
+    'dimensiones':      'dim',
+  };
+
+  const result = {};
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+
+  lines.forEach(line=>{
+    // Separar por tab o múltiples espacios o |
+    const parts = line.split(/\t|\s{2,}|\|/).map(p=>p.trim()).filter(Boolean);
+    if(parts.length < 2) return;
+    const key = parts[0].toLowerCase().replace(/\s+/g,' ');
+    const val = parts.slice(1).join(' ').trim();
+    const mapped = MAP[key];
+    if(mapped && val) result[mapped] = val;
+  });
+
+  // Calcular volumen si tenemos dim
+  if(result.dim){
+    const vol = getVolumenNum(result.dim);
+    if(vol > 0) result.vol = vol.toFixed(3)+' m³';
+  }
+
+  const hasData = Object.keys(result).length >= 2;
+  if(!hasData){
+    errEl.textContent = '⚠️ No se detectaron campos. Asegúrate de copiar la tabla completa del correo (incluye los nombres de fila como "Cliente", "OF", "OC", etc.)';
+    errEl.style.display = 'block';
+    prevEl.style.display = 'none';
+    btnEl.style.display = 'none';
+    _parsedPaste = null;
+    return;
+  }
+
+  errEl.style.display = 'none';
+  _parsedPaste = result;
+
+  // Mostrar preview
+  const LABELS = {
+    cliente:'Cliente', of:'OF', oc:'OC', sku:'SKU',
+    desc1:'Descripción 1', desc2:'Descripción 2',
+    cant:'Cantidad (un)', peso:'Peso Pallet (kg)',
+    dim:'Dimensión Pallet', vol:'Volumen m³'
+  };
+  document.getElementById('paste-preview-content').innerHTML =
+    Object.entries(result).map(([k,v])=>
+      `<div style="color:#6a8a80;font-weight:600">${LABELS[k]||k}:</div><div style="font-weight:700;color:#1a2e2a">${v}</div>`
+    ).join('');
+  prevEl.style.display = 'block';
+  btnEl.style.display = 'inline-flex';
+}
+
+function applyPaste(){
+  if(!_parsedPaste) return;
+  const d = _parsedPaste;
+  const set = (id, val)=>{ const el=document.getElementById(id); if(el&&val!==undefined) el.value=val; };
+  set('d-cliente', d.cliente);
+  set('d-of',      d.of);
+  set('d-oc',      d.oc);
+  set('d-desc1',   d.desc1);
+  set('d-desc2',   d.desc2);
+  set('d-cant',    d.cant ? String(d.cant).replace(',','.') : '');
+  set('d-peso',    d.peso ? String(d.peso).replace(',','.') : '');
+  set('d-dim',     d.dim);
+  // Recalcular volumen
+  if(d.dim){ calcVolumen(); }
+  // Estado por defecto pendiente
+  document.getElementById('d-estado').value = 'PENDIENTE';
+  closePasteModal();
+  toast('✅ Formulario llenado desde el correo');
 }
 </script>
 </body>
