@@ -154,6 +154,7 @@ input[type="file"]{display:none;}
   <div style="display:flex;align-items:center;gap:6px;">
     <button class="nav-tab active" id="tab-despachos" onclick="switchTab('despachos')">🚚 Despachos</button>
     <button class="nav-tab" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab" id="tab-cubicacion" onclick="switchTab('cubicacion')">📦 Cubicación</button>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <div class="header-right" id="despachos-actions">
@@ -430,6 +431,163 @@ input[type="file"]{display:none;}
   </div>
 
 </div><!-- /panel-dashboard -->
+
+<!-- ══ CUBICACIÓN VIEW ══ -->
+<div class="view-panel" id="panel-cubicacion">
+
+  <div class="top-bar">
+    <div>
+      <div class="page-title">📦 <span>Cubicación de Pallets</span></div>
+      <div style="font-size:.8em;color:rgba(255,255,255,.65);margin-top:3px">Calcula automáticamente la distribución de productos en pallet</div>
+    </div>
+  </div>
+
+  <!-- GRID PRINCIPAL -->
+  <div style="display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start">
+
+    <!-- PANEL IZQUIERDO: INPUTS -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <!-- TIPO DE PALLET -->
+      <div class="chart-card">
+        <div class="chart-card-title">🪵 Tipo de Pallet</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div id="pallet-opt-950" onclick="selectPallet('950x950')"
+            style="border:2px solid #2e9e7a;border-radius:12px;padding:14px;cursor:pointer;text-align:center;background:rgba(46,158,122,.2);transition:all .2s">
+            <div style="font-size:1.3em">🟫</div>
+            <div style="color:white;font-weight:700;font-size:.95em;margin-top:6px">950 × 950</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.75em">mm</div>
+          </div>
+          <div id="pallet-opt-1000" onclick="selectPallet('1000x1200')"
+            style="border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:14px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);transition:all .2s">
+            <div style="font-size:1.3em">🟫</div>
+            <div style="color:white;font-weight:700;font-size:.95em;margin-top:6px">1000 × 1200</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.75em">mm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIPO DE PRODUCTO -->
+      <div class="chart-card">
+        <div class="chart-card-title">📐 Medida del Producto</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div id="prod-opt-305x305" onclick="selectProd('305x305')"
+            style="border:2px solid #2e9e7a;border-radius:12px;padding:12px;cursor:pointer;text-align:center;background:rgba(46,158,122,.2);transition:all .2s">
+            <div style="color:white;font-weight:700;font-size:.9em">305 × 305</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em">mm (ancho × largo)</div>
+          </div>
+          <div id="prod-opt-305x610" onclick="selectProd('305x610')"
+            style="border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);transition:all .2s">
+            <div style="color:white;font-weight:700;font-size:.9em">305 × 610</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em">mm (ancho × largo)</div>
+          </div>
+        </div>
+
+        <!-- ALTURA -->
+        <div style="color:rgba(255,255,255,.65);font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Altura del producto</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="altura-opts">
+          <!-- generado por JS -->
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+          <span style="color:rgba(255,255,255,.5);font-size:.8em">Otra altura (mm):</span>
+          <input id="altura-custom" type="number" min="1" placeholder="ej: 45"
+            style="width:90px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 10px;color:white;font-size:.9em;outline:none"
+            oninput="selectAlturaCustom(this.value)">
+        </div>
+      </div>
+
+      <!-- CANTIDAD -->
+      <div class="chart-card">
+        <div class="chart-card-title">🔢 Cantidad de Productos</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button onclick="adjQty(-10)" style="background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:white;border-radius:10px;width:38px;height:38px;font-size:1.1em;cursor:pointer">−</button>
+          <input id="cubo-qty" type="number" min="1" value="100"
+            style="flex:1;text-align:center;font-size:1.6em;font-weight:700;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:10px;padding:8px;color:white;outline:none"
+            oninput="calcCubicacion()">
+          <button onclick="adjQty(10)" style="background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:white;border-radius:10px;width:38px;height:38px;font-size:1.1em;cursor:pointer">+</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="setQty(50)">50</button>
+          <button class="btn btn-ghost btn-sm" onclick="setQty(100)">100</button>
+          <button class="btn btn-ghost btn-sm" onclick="setQty(128)">128</button>
+          <button class="btn btn-ghost btn-sm" onclick="setQty(200)">200</button>
+          <button class="btn btn-ghost btn-sm" onclick="setQty(256)">256</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;justify-content:center" onclick="calcCubicacion()">
+        🧮 Calcular Cubicación
+      </button>
+    </div>
+
+    <!-- PANEL DERECHO: RESULTADOS -->
+    <div style="display:flex;flex-direction:column;gap:14px" id="cubo-results-panel">
+
+      <!-- KPIs resultado -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div class="d-card"><h3>Pallets Necesarios</h3><p id="res-pallets" style="font-size:2.2em">—</p></div>
+        <div class="d-card"><h3>Altura del Pallet</h3><p id="res-altura" style="font-size:2.2em">—</p><small style="color:rgba(255,255,255,.5)">cm</small></div>
+        <div class="d-card"><h3>Unid. por Pallet</h3><p id="res-por-pallet" style="font-size:2.2em">—</p></div>
+        <div class="d-card"><h3>Unid. último Pallet</h3><p id="res-ultimo" style="font-size:2.2em">—</p></div>
+      </div>
+
+      <!-- DETALLE DE CAPAS -->
+      <div class="chart-card" id="cubo-detalle" style="display:none">
+        <div class="chart-card-title">📊 Detalle de distribución</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.75em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
+            <div id="detalle-capa" style="color:white;font-size:.9em;line-height:2"></div>
+          </div>
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.75em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
+            <div id="detalle-pallet" style="color:white;font-size:.9em;line-height:2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISUALIZACIÓN TOP-DOWN -->
+      <div class="chart-card" id="cubo-visual" style="display:none">
+        <div class="chart-card-title">🔭 Vista superior — distribución en pallet</div>
+        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.75em;margin-bottom:8px;text-align:center">Orientación A</div>
+            <canvas id="canvas-vista-a" width="260" height="260" style="border-radius:8px;background:rgba(255,255,255,.05)"></canvas>
+          </div>
+          <div id="orient-b-wrap">
+            <div style="color:rgba(255,255,255,.5);font-size:.75em;margin-bottom:8px;text-align:center">Orientación B (rotada 90°)</div>
+            <canvas id="canvas-vista-b" width="260" height="260" style="border-radius:8px;background:rgba(255,255,255,.05)"></canvas>
+          </div>
+        </div>
+        <div id="orient-recomend" style="margin-top:12px;font-size:.85em;color:#a8e6c8;font-weight:600"></div>
+      </div>
+
+      <!-- TABLA RESUMEN POR PALLET -->
+      <div class="chart-card" id="cubo-tabla" style="display:none">
+        <div class="chart-card-title">📋 Resumen por pallet</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.88em">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.15)">
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:left">Pallet N°</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Unidades</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Capas</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Altura (cm)</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:8px 12px;text-align:right">Ocupación</th>
+            </tr>
+          </thead>
+          <tbody id="cubo-tabla-body"></tbody>
+        </table>
+      </div>
+
+      <!-- ESTADO VACÍO -->
+      <div id="cubo-empty" class="chart-card" style="text-align:center;padding:50px">
+        <div style="font-size:3em">📦</div>
+        <div style="color:rgba(255,255,255,.6);margin-top:12px;font-size:.95em">Selecciona pallet, producto, altura y cantidad<br>luego presiona <strong>Calcular</strong></div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /panel-cubicacion -->
 
 </div><!-- /inner-wrap -->
 </div><!-- /main-content -->
@@ -1078,10 +1236,10 @@ function removeLogo(){
 //  NAVEGACIÓN TABS
 // ══════════════════════════════════════════════
 function switchTab(tab){
-  document.getElementById('panel-despachos').classList.toggle('active', tab==='despachos');
-  document.getElementById('panel-dashboard').classList.toggle('active', tab==='dashboard');
-  document.getElementById('tab-despachos').classList.toggle('active', tab==='despachos');
-  document.getElementById('tab-dashboard').classList.toggle('active', tab==='dashboard');
+  ['despachos','dashboard','cubicacion'].forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
   document.getElementById('despachos-actions').style.display = tab==='despachos' ? 'flex' : 'none';
   if(tab==='dashboard'){ fillDashFilters(); renderDashboard(); }
 }
@@ -1326,6 +1484,251 @@ function renderTablaClientes(data){
       <td style="padding:16px 20px;text-align:center">${badge}</td>
     </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  CUBICACIÓN
+// ══════════════════════════════════════════════
+const PALLETS = {
+  '950x950':  { w:950,  l:950,  label:'950×950 mm' },
+  '1000x1200':{ w:1000, l:1200, label:'1000×1200 mm' }
+};
+const PRODUCTOS = {
+  '305x305': { w:305, l:305, label:'305×305 mm' },
+  '305x610': { w:305, l:610, label:'305×610 mm' }
+};
+const ALTURAS = [30,36,40,50,60,65,70,80];
+const PALLET_BASE_H = 14; // altura base pallet en cm
+
+let cuboState = {
+  pallet: '950x950',
+  prod:   '305x305',
+  altura: 30,
+  qty:    100
+};
+
+// Init cubicacion UI
+(function initCubo(){
+  // Alturas
+  const wrap = document.getElementById('altura-opts');
+  if(!wrap) return;
+  wrap.innerHTML = ALTURAS.map(h=>`
+    <div id="alt-opt-${h}" onclick="selectAltura(${h})"
+      style="border:2px solid ${h===30?'#2e9e7a':'rgba(255,255,255,.2)'};border-radius:10px;padding:7px 14px;cursor:pointer;
+      background:${h===30?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)'};color:white;font-weight:700;font-size:.9em;transition:all .2s">
+      ${h} mm
+    </div>`).join('');
+})();
+
+function selectPallet(key){
+  cuboState.pallet = key;
+  ['950x950','1000x1200'].forEach(k=>{
+    const el = document.getElementById('pallet-opt-'+k.replace('x','x'));
+    const sel = k===key;
+    if(k==='950x950') document.getElementById('pallet-opt-950').style.border=sel?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
+    if(k==='950x950') document.getElementById('pallet-opt-950').style.background=sel?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
+    if(k==='1000x1200') document.getElementById('pallet-opt-1000').style.border=sel?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
+    if(k==='1000x1200') document.getElementById('pallet-opt-1000').style.background=sel?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
+  });
+  calcCubicacion();
+}
+
+function selectProd(key){
+  cuboState.prod = key;
+  ['305x305','305x610'].forEach(k=>{
+    const id = 'prod-opt-'+k;
+    const el = document.getElementById(id);
+    if(!el) return;
+    const sel = k===key;
+    el.style.border = sel?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
+    el.style.background = sel?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
+  });
+  calcCubicacion();
+}
+
+function selectAltura(h){
+  cuboState.altura = h;
+  document.getElementById('altura-custom').value = '';
+  ALTURAS.forEach(a=>{
+    const el = document.getElementById('alt-opt-'+a);
+    if(!el) return;
+    el.style.border = a===h?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
+    el.style.background = a===h?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
+  });
+  calcCubicacion();
+}
+
+function selectAlturaCustom(val){
+  const h = parseFloat(val);
+  if(!h||h<=0) return;
+  cuboState.altura = h;
+  ALTURAS.forEach(a=>{
+    const el = document.getElementById('alt-opt-'+a);
+    if(el){ el.style.border='2px solid rgba(255,255,255,.2)'; el.style.background='rgba(255,255,255,.05)'; }
+  });
+  calcCubicacion();
+}
+
+function adjQty(delta){
+  const el = document.getElementById('cubo-qty');
+  const v = Math.max(1,(parseInt(el.value)||0)+delta);
+  el.value = v; cuboState.qty = v; calcCubicacion();
+}
+function setQty(v){
+  document.getElementById('cubo-qty').value = v;
+  cuboState.qty = v; calcCubicacion();
+}
+
+// ── CÁLCULO PRINCIPAL ──
+function calcCubicacion(){
+  const qty = parseInt(document.getElementById('cubo-qty').value)||0;
+  if(!qty){ return; }
+  cuboState.qty = qty;
+
+  const pal = PALLETS[cuboState.pallet];
+  const pro = PRODUCTOS[cuboState.prod];
+  const altMM = cuboState.altura;
+
+  // Calcular cuántos caben por capa en orientación A (sin rotar)
+  const filaA = Math.floor(pal.w / pro.w);
+  const colA  = Math.floor(pal.l / pro.l);
+  const porCapaA = filaA * colA;
+
+  // Orientación B (rotado 90°)
+  const filaB = Math.floor(pal.w / pro.l);
+  const colB  = Math.floor(pal.l / pro.w);
+  const porCapaB = filaB * colB;
+
+  // Usar la mejor orientación
+  const mejorOrient = porCapaA >= porCapaB ? 'A' : 'B';
+  const filas  = mejorOrient==='A' ? filaA : filaB;
+  const cols   = mejorOrient==='A' ? colA  : colB;
+  const porCapa = Math.max(porCapaA, porCapaB);
+
+  if(porCapa === 0){
+    document.getElementById('cubo-empty').style.display='block';
+    ['cubo-detalle','cubo-visual','cubo-tabla'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('cubo-empty').innerHTML=`<div style="font-size:2em">⚠️</div><div style="color:#ffaaaa;margin-top:10px">El producto no cabe en este pallet</div>`;
+    return;
+  }
+
+  // Capas por pallet (altura máxima pallet ~180cm total, base 14cm → 166cm útiles)
+  const maxAltUtil = 1660; // mm
+  const capasPorPallet = Math.floor(maxAltUtil / altMM);
+  const porPallet = porCapa * capasPorPallet;
+
+  // Cuántos pallets completos y el último
+  const palletsCompletos = Math.floor(qty / porPallet);
+  const resto = qty % porPallet;
+  const totalPallets = palletsCompletos + (resto > 0 ? 1 : 0);
+  const capasUltimo = resto > 0 ? Math.ceil(resto / porCapa) : capasPorPallet;
+  const unidUltimo  = resto > 0 ? resto : porPallet;
+  const altPalletCm = +(PALLET_BASE_H + (capasPorPallet * altMM)/10).toFixed(1);
+  const altUltimoCm = +(PALLET_BASE_H + (capasUltimo * altMM)/10).toFixed(1);
+
+  // KPIs
+  document.getElementById('res-pallets').textContent    = totalPallets;
+  document.getElementById('res-altura').textContent     = altPalletCm;
+  document.getElementById('res-por-pallet').textContent = porPallet;
+  document.getElementById('res-ultimo').textContent     = unidUltimo===porPallet ? porPallet : unidUltimo;
+  document.getElementById('cubo-empty').style.display   = 'none';
+
+  // Detalle
+  document.getElementById('detalle-capa').innerHTML = `
+    <div>📐 Orientación: <strong>${mejorOrient==='A'?'Normal':'Rotada 90°'} ✅</strong></div>
+    <div>↔ Filas × columnas: <strong>${filas} × ${cols}</strong></div>
+    <div>📦 Unidades por capa: <strong>${porCapa}</strong></div>
+    <div>📏 Altura por capa: <strong>${altMM} mm</strong></div>`;
+  document.getElementById('detalle-pallet').innerHTML = `
+    <div>🔢 Capas por pallet: <strong>${capasPorPallet}</strong></div>
+    <div>📦 Unid. por pallet: <strong>${porPallet}</strong></div>
+    <div>📏 Altura total: <strong>${altPalletCm} cm</strong></div>
+    <div>🪵 Base pallet: <strong>${PALLET_BASE_H} cm</strong></div>`;
+  document.getElementById('cubo-detalle').style.display = 'block';
+
+  // Tabla por pallet
+  let tablaHTML = '';
+  for(let i=1;i<=totalPallets;i++){
+    const esUltimo = i===totalPallets && resto>0;
+    const unids = esUltimo ? resto : porPallet;
+    const capas = esUltimo ? capasUltimo : capasPorPallet;
+    const alt   = esUltimo ? altUltimoCm : altPalletCm;
+    const ocup  = Math.round((unids/porPallet)*100);
+    const color = ocup===100?'#a8e6c8':ocup>50?'#fef08a':'#fca5a5';
+    tablaHTML += `<tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+      <td style="padding:8px 12px;color:white;font-weight:700">Pallet ${i}${esUltimo?' <span style="font-size:.75em;color:#fca5a5">(incompleto)</span>':''}</td>
+      <td style="padding:8px 12px;text-align:right;color:white;font-weight:700">${unids}</td>
+      <td style="padding:8px 12px;text-align:right;color:rgba(255,255,255,.8)">${capas}</td>
+      <td style="padding:8px 12px;text-align:right;color:rgba(255,255,255,.8)">${alt}</td>
+      <td style="padding:8px 12px;text-align:right">
+        <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;color:${color};font-weight:700;font-size:.85em">${ocup}%</span>
+      </td>
+    </tr>`;
+  }
+  document.getElementById('cubo-tabla-body').innerHTML = tablaHTML;
+  document.getElementById('cubo-tabla').style.display = 'block';
+
+  // Dibujar vista superior
+  drawVista('canvas-vista-a', pal, pro, filaA, colA, false);
+  drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
+  document.getElementById('orient-recomend').textContent =
+    `✅ Orientación recomendada: ${mejorOrient==='A'?'Normal (A)':'Rotada 90° (B)'} → ${porCapa} unidades por capa`;
+  document.getElementById('cubo-visual').style.display  = 'block';
+}
+
+function drawVista(canvasId, pal, pro, filas, cols, rotado){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0,0,CW,CH);
+
+  const pW = rotado ? pro.l : pro.w;
+  const pL = rotado ? pro.w : pro.l;
+  const scaleX = (CW-40) / pal.w;
+  const scaleY = (CH-40) / pal.l;
+  const scale  = Math.min(scaleX, scaleY);
+  const offX = (CW - pal.w*scale)/2;
+  const offY = (CH - pal.l*scale)/2;
+
+  // Pallet fondo
+  ctx.fillStyle = 'rgba(139,90,43,.4)';
+  ctx.strokeStyle = 'rgba(139,90,43,.8)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(offX, offY, pal.w*scale, pal.l*scale, 6);
+  ctx.fill(); ctx.stroke();
+
+  // Productos
+  for(let f=0;f<filas;f++){
+    for(let c=0;c<cols;c++){
+      const x = offX + f*pW*scale;
+      const y = offY + c*pL*scale;
+      const w = pW*scale - 2;
+      const h = pL*scale - 2;
+      ctx.fillStyle = `hsla(${160+f*15},60%,45%,.75)`;
+      ctx.strokeStyle = 'rgba(255,255,255,.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x+1, y+1, w, h, 3);
+      ctx.fill(); ctx.stroke();
+      // Número
+      if(w>18 && h>12){
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.font = `bold ${Math.min(11,w/2.5)}px Segoe UI`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(f*cols+c+1, x+w/2+1, y+h/2+1);
+      }
+    }
+  }
+
+  // Dimensión pallet
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.font = '10px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${pal.w}×${pal.l} mm`, CW/2, offY-6);
+  ctx.fillText(`${filas}×${cols} = ${filas*cols} uds/capa`, CW/2, offY+pal.l*scale+14);
 }
 
 // ══════════════════════════════════════════════
