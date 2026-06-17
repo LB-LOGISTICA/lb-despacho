@@ -119,6 +119,11 @@ input[type="file"]{display:none;}
 .dash-select{background:#1a4d4d;color:white;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;padding:8px 12px;font-size:.88em;font-family:inherit;outline:none;cursor:pointer;}
 .dash-select:focus{border-color:#2e9e7a;}
 .dash-select option{background:#1a4d4d;color:white;}
+/* ── COLUMN FILTERS ── */
+.col-filter{width:100%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:4px 6px;color:white;font-size:.72em;font-family:inherit;outline:none;}
+.col-filter::placeholder{color:rgba(255,255,255,.4);}
+.col-filter:focus{border-color:#a8e6c8;background:rgba(255,255,255,.18);}
+.col-filter option{background:#1a4d4d;color:white;}
 @media print{.no-print{display:none!important;} body{overflow:visible;height:auto;}}
 
 /* ── SETTINGS PANEL ── */
@@ -304,24 +309,59 @@ input[type="file"]{display:none;}
         <col style="width:7%">  <!-- Acciones -->
       </colgroup>
       <thead>
+        <!-- Fila 1: títulos con sort -->
         <tr>
-          <th class="dth">Cliente</th>
-          <th class="dth">OF</th>
-          <th class="dth">OC</th>
+          <th class="dth" onclick="sortDesp('cliente')" style="cursor:pointer">Cliente <span id="sort-cliente"></span></th>
+          <th class="dth" onclick="sortDesp('of')" style="cursor:pointer">OF <span id="sort-of"></span></th>
+          <th class="dth" onclick="sortDesp('oc')" style="cursor:pointer">OC <span id="sort-oc"></span></th>
           <th class="dth">Descripción 1</th>
           <th class="dth">Descripción 2</th>
-          <th class="dth right">Cant. (un)</th>
-          <th class="dth right">Peso Pallet (kg)</th>
+          <th class="dth right" onclick="sortDesp('cant')" style="cursor:pointer">Cant. <span id="sort-cant"></span></th>
+          <th class="dth right">Peso (kg)</th>
           <th class="dth">Dim. Pallet</th>
-          <th class="dth right">Vol. m³</th>
+          <th class="dth right" onclick="sortDesp('vol')" style="cursor:pointer">Vol. m³ <span id="sort-vol"></span></th>
           <th class="dth">Quarter</th>
-          <th class="dth">F. Ingreso</th>
-          <th class="dth">F. Despacho</th>
+          <th class="dth" onclick="sortDesp('fechaObj')" style="cursor:pointer">F. Ingreso <span id="sort-fechaObj"></span></th>
+          <th class="dth" onclick="sortDesp('fdesp')" style="cursor:pointer">F. Despacho <span id="sort-fdesp"></span></th>
           <th class="dth">Estado</th>
-          <th class="dth right">Pallets</th>
+          <th class="dth right" onclick="sortDesp('pallets')" style="cursor:pointer">Pallets <span id="sort-pallets"></span></th>
           <th class="dth right">Guía</th>
           <th class="dth">Observación</th>
-          <th class="dth no-print">Acciones</th>
+          <th class="dth no-print" style="text-align:center">
+            <button onclick="clearColFilters()" title="Limpiar filtros de columna" style="background:rgba(255,100,100,.25);border:none;color:#ffaaaa;border-radius:6px;padding:2px 8px;font-size:.75em;cursor:pointer">✖ Filtros</button>
+          </th>
+        </tr>
+        <!-- Fila 2: inputs de filtro por columna -->
+        <tr id="col-filter-row">
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-cliente" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-of" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-oc" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-desc1" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-desc2" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"></th>
+          <th class="dth" style="padding:4px 5px"></th>
+          <th class="dth" style="padding:4px 5px"></th>
+          <th class="dth" style="padding:4px 5px"></th>
+          <th class="dth" style="padding:4px 5px">
+            <select class="col-filter" id="cf-quarter" onchange="renderDespachos()" style="font-size:.7em">
+              <option value="">—</option>
+              <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+            </select>
+          </th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-fingreso" type="text" placeholder="mm/aaaa" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-fdesp" type="text" placeholder="aaaa-mm" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px">
+            <select class="col-filter" id="cf-estado" onchange="renderDespachos()" style="font-size:.68em">
+              <option value="">—</option>
+              <option value="DESPACHOS OK">✅ OK</option>
+              <option value="PENDIENTE">⏳ Pend.</option>
+              <option value="EN TRANSITO">🚛 Trans.</option>
+            </select>
+          </th>
+          <th class="dth" style="padding:4px 5px"></th>
+          <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-guia" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"></th>
+          <th class="dth no-print" style="padding:4px 5px"></th>
         </tr>
       </thead>
       <tbody id="despachos-tbody"></tbody>
@@ -928,13 +968,48 @@ async function deleteDespacho(id){
 // ══════════════════════════════════════════════
 //  RENDER TABLA
 // ══════════════════════════════════════════════
+let _sortCol = '', _sortDir = 1;
+
+function sortDesp(col){
+  if(_sortCol === col) _sortDir *= -1;
+  else { _sortCol = col; _sortDir = 1; }
+  // Update sort indicators
+  document.querySelectorAll('[id^="sort-"]').forEach(el=>el.textContent='');
+  const el = document.getElementById('sort-'+col);
+  if(el) el.textContent = _sortDir===1 ? ' ▲' : ' ▼';
+  renderDespachos();
+}
+
+function clearColFilters(){
+  ['cf-cliente','cf-of','cf-oc','cf-desc1','cf-desc2','cf-quarter','cf-fingreso','cf-fdesp','cf-estado','cf-guia'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  renderDespachos();
+}
+
+function getColFilter(id){ return (document.getElementById(id)||{value:''}).value.trim().toLowerCase(); }
+
 function renderDespachos(){
   const q       = (document.getElementById('desp-search')||{value:''}).value.trim().toLowerCase();
   const estado  = (document.getElementById('desp-filter-estado')||{value:''}).value;
   const mes     = (document.getElementById('desp-filter-mes')||{value:''}).value;
   const quarter = (document.getElementById('desp-filter-quarter')||{value:''}).value;
 
+  // Column filters
+  const cfCliente = getColFilter('cf-cliente');
+  const cfOf      = getColFilter('cf-of');
+  const cfOc      = getColFilter('cf-oc');
+  const cfDesc1   = getColFilter('cf-desc1');
+  const cfDesc2   = getColFilter('cf-desc2');
+  const cfQuarter = getColFilter('cf-quarter');
+  const cfFingreso= getColFilter('cf-fingreso');
+  const cfFdesp   = getColFilter('cf-fdesp');
+  const cfEstado  = (document.getElementById('cf-estado')||{value:''}).value;
+  const cfGuia    = getColFilter('cf-guia');
+
   let list = [...despachos];
+
+  // Global filters
   if(q)       list = list.filter(d=>
     d.cliente?.toLowerCase().includes(q)||d.oc?.toLowerCase().includes(q)||
     d.of?.toLowerCase().includes(q)||d.guia?.toLowerCase().includes(q)||
@@ -942,6 +1017,27 @@ function renderDespachos(){
   if(estado)  list = list.filter(d=>d.estado===estado);
   if(mes)     list = list.filter(d=>d.fechaIngreso?.includes('/'+mes+'/')||d.fechaObj?.startsWith(mes));
   if(quarter) list = list.filter(d=>d.quarter===quarter);
+
+  // Column filters
+  if(cfCliente) list = list.filter(d=>d.cliente?.toLowerCase().includes(cfCliente));
+  if(cfOf)      list = list.filter(d=>d.of?.toLowerCase().includes(cfOf));
+  if(cfOc)      list = list.filter(d=>d.oc?.toLowerCase().includes(cfOc));
+  if(cfDesc1)   list = list.filter(d=>d.desc1?.toLowerCase().includes(cfDesc1));
+  if(cfDesc2)   list = list.filter(d=>d.desc2?.toLowerCase().includes(cfDesc2));
+  if(cfQuarter) list = list.filter(d=>d.quarter?.toLowerCase()===cfQuarter);
+  if(cfFingreso)list = list.filter(d=>d.fechaIngreso?.toLowerCase().includes(cfFingreso));
+  if(cfFdesp)   list = list.filter(d=>d.fdesp?.toLowerCase().includes(cfFdesp));
+  if(cfEstado)  list = list.filter(d=>d.estado===cfEstado);
+  if(cfGuia)    list = list.filter(d=>d.guia?.toLowerCase().includes(cfGuia));
+
+  // Sort
+  if(_sortCol){
+    list.sort((a,b)=>{
+      const av = a[_sortCol]||'', bv = b[_sortCol]||'';
+      const n = typeof av==='number' ? av-bv : String(av).localeCompare(String(bv));
+      return n * _sortDir;
+    });
+  }
 
   const tbody = document.getElementById('despachos-tbody');
   if(!tbody) return;
@@ -1612,62 +1708,35 @@ function calcCubicacion(){
   const pro   = PRODUCTOS[cuboState.prod];
   const altMM = cuboState.altura;
 
-  // ── Orientación pura A (normal) ──
-  const filaA    = Math.floor(pal.w / pro.w);
-  const colA     = Math.floor(pal.l / pro.l);
-  const porCapaA = filaA * colA;
+  // ── Definir layout según producto ──
+  let porCapa, layout;
 
-  // ── Orientación pura B (rotado 90°) ──
-  const filaB    = Math.floor(pal.w / pro.l);
-  const colB     = Math.floor(pal.l / pro.w);
-  const porCapaB = filaB * colB;
-
-  // ── Combinación MIXTA: mitad A + mitad B (ej: 305x610 → 4 uds cuadrado) ──
-  // Zona A ocupa filaA*pro.w de ancho → zona B usa el ancho restante
-  let porCapaMix = 0, mixLayout = null;
-  if(pro.w !== pro.l){ // solo tiene sentido si el producto NO es cuadrado
-    // Combinación horizontal: columnas A + columnas B en el largo del pallet
-    const anchoZonaA = filaA * pro.w;
-    const anchoZonaB = pal.w - anchoZonaA;
-    const colBenZonaB = Math.floor(anchoZonaB / pro.l);
-    const filaBenZonaB = Math.floor(pal.l / pro.w);
-    const mixH = filaA * colA + colBenZonaB * filaBenZonaB;
-
-    // Combinación vertical: filas A + filas B en el ancho del pallet
-    const largoZonaA = colA * pro.l;
-    const largoZonaB = pal.l - largoZonaA;
-    const filaBenZonaB2 = Math.floor(pal.w / pro.l);
-    const colBenZonaB2  = Math.floor(largoZonaB / pro.w);
-    const mixV = filaA * colA + filaBenZonaB2 * colBenZonaB2;
-
-    if(mixH > porCapaMix){
-      porCapaMix = mixH;
-      mixLayout = { tipo:'H', filaA, colA, anchoZonaA, colBenZonaB, filaBenZonaB };
-    }
-    if(mixV > porCapaMix){
-      porCapaMix = mixV;
-      mixLayout = { tipo:'V', filaA, colA, largoZonaA, filaBenZonaB2, colBenZonaB2 };
-    }
+  if(pro.w === pro.l){
+    // 305x305 — cuadrado, solo orientación normal
+    const filas = Math.floor(pal.w / pro.w);
+    const cols  = Math.floor(pal.l / pro.l);
+    porCapa = filas * cols;
+    layout  = { tipo:'cuadrado', filas, cols };
+  } else {
+    // 305x610 — SIEMPRE patrón mixto: 2 normales arriba + 2 rotadas abajo formando cuadrado 610x610
+    // Bloque unitario: 610mm x 610mm = 4 unidades
+    const bloqueW = pro.l; // 610mm
+    const bloqueL = pro.l; // 610mm
+    const bFilas  = Math.floor(pal.w / bloqueW);
+    const bCols   = Math.floor(pal.l / bloqueL);
+    porCapa = bFilas * bCols * 4;
+    layout  = { tipo:'patron4', bFilas, bCols, bloqueW, bloqueL, pro };
   }
-
-  // ── Elegir la mejor opción ──
-  const opciones = [
-    { nombre:'Normal (A)', porCapa: porCapaA, filas: filaA, cols: colA, rotado: false, mix: false },
-    { nombre:'Rotada 90° (B)', porCapa: porCapaB, filas: filaB, cols: colB, rotado: true, mix: false },
-    ...(porCapaMix > 0 ? [{ nombre:'Mixta (A+B)', porCapa: porCapaMix, mix: true, layout: mixLayout }] : [])
-  ];
-  const mejor = opciones.reduce((a,b)=>b.porCapa>a.porCapa?b:a);
-  const porCapa = mejor.porCapa;
 
   if(porCapa === 0){
     document.getElementById('cubo-empty').style.display='block';
-    ['cubo-detalle','cubo-visual','cubo-tabla'].forEach(id=>document.getElementById(id).style.display='none');
+    ['cubo-detalle','cubo-3d','cubo-visual','cubo-tabla'].forEach(id=>document.getElementById(id).style.display='none');
     document.getElementById('cubo-empty').innerHTML=`<div style="font-size:2em">⚠️</div><div style="color:#ffaaaa;margin-top:10px">El producto no cabe en este pallet</div>`;
     return;
   }
 
-  // ── Cálculo de capas y pallets ──
-  const maxAltUtil    = 1660; // mm útiles (180cm total - 14cm base)
+  // ── Altura máxima 1200mm útiles (120cm) ──
+  const maxAltUtil     = 1200; // mm
   const capasPorPallet = Math.floor(maxAltUtil / altMM);
   const porPallet      = porCapa * capasPorPallet;
   const palletsCompletos = Math.floor(qty / porPallet);
@@ -1679,36 +1748,35 @@ function calcCubicacion(){
   const altUltimoCm      = +(PALLET_BASE_H + (capasUltimo * altMM)/10).toFixed(1);
 
   // ── KPIs ──
-  document.getElementById('res-pallets').textContent    = totalPallets;
-  document.getElementById('res-altura').textContent     = altPalletCm;
-  document.getElementById('res-por-pallet').textContent = porPallet;
-  document.getElementById('res-por-capa').textContent   = porCapa;
-  document.getElementById('res-capas').textContent      = capasPorPallet;
-  document.getElementById('res-ultimo').textContent     = unidUltimo === porPallet ? porPallet : unidUltimo;
-  const ultimoLabel = document.getElementById('res-ultimo-label');
-  if(ultimoLabel) ultimoLabel.textContent = resto > 0 ? `(${capasUltimo} capas)` : 'completo';
-  document.getElementById('cubo-empty').style.display   = 'none';
+  const s = id => document.getElementById(id);
+  s('res-pallets').textContent    = totalPallets;
+  s('res-altura').textContent     = altPalletCm;
+  s('res-por-pallet').textContent = porPallet;
+  s('res-por-capa').textContent   = porCapa;
+  s('res-capas').textContent      = capasPorPallet;
+  s('res-ultimo').textContent     = unidUltimo === porPallet ? porPallet : unidUltimo;
+  const ultimoLabel = s('res-ultimo-label');
+  if(ultimoLabel) ultimoLabel.textContent = resto > 0 ? `(${capasUltimo} capas · ${altUltimoCm} cm)` : 'completo';
+  s('cubo-empty').style.display = 'none';
 
   // ── Detalle ──
-  const orientLabel = mejor.mix
-    ? `Mixta A+B <span style="background:#facc15;color:#1a2e2a;border-radius:10px;padding:1px 8px;font-size:.8em">ÓPTIMA</span>`
-    : mejor.rotado ? 'Rotada 90° (B) ✅' : 'Normal (A) ✅';
-
-  const filasLabel = mejor.mix
-    ? `${mejor.layout.filaA}×${mejor.layout.colA} + zona B`
-    : `${mejor.filas} × ${mejor.cols}`;
-
-  document.getElementById('detalle-capa').innerHTML = `
-    <div>📐 Orientación: <strong>${orientLabel}</strong></div>
-    <div>↔ Distribución: <strong>${filasLabel}</strong></div>
-    <div>📦 Unidades por capa: <strong style="font-size:1.2em;color:#a8e6c8">${porCapa}</strong></div>
-    <div>📏 Altura por capa: <strong>${altMM} mm</strong></div>`;
-  document.getElementById('detalle-pallet').innerHTML = `
-    <div>🔢 Capas por pallet: <strong>${capasPorPallet}</strong></div>
-    <div>📦 Unid. por pallet: <strong style="font-size:1.2em;color:#a8e6c8">${porPallet}</strong></div>
+  const tipoLabel = layout.tipo==='patron4'
+    ? `Patrón 4 uds — 2 normales + 2 rotadas (cuadrado 610×610)`
+    : `Normal ${layout.filas}×${layout.cols}`;
+  s('detalle-capa').innerHTML = `
+    <div>📐 Patrón: <strong>${tipoLabel}</strong></div>
+    <div>📦 Uds/capa: <strong style="font-size:1.3em;color:#a8e6c8">${porCapa}</strong></div>
+    <div>📏 Altura capa: <strong>${altMM} mm</strong></div>
+    <div>📐 Pallet: <strong>${pal.w}×${pal.l} mm</strong></div>`;
+  s('detalle-pallet').innerHTML = `
+    <div>🔢 Capas/pallet: <strong>${capasPorPallet}</strong></div>
+    <div>📦 Uds/pallet: <strong style="font-size:1.3em;color:#a8e6c8">${porPallet}</strong></div>
     <div>📏 Altura total: <strong>${altPalletCm} cm</strong></div>
     <div>🪵 Base pallet: <strong>${PALLET_BASE_H} cm</strong></div>`;
-  document.getElementById('cubo-detalle').style.display = 'block';
+  s('cubo-detalle').style.display = 'block';
+  s('orient-recomend').innerHTML = layout.tipo==='patron4'
+    ? `✅ Patrón fijo: 2 piezas en posición normal + 2 rotadas 90° → <strong>${porCapa} unidades por capa</strong>`
+    : `✅ Distribución: ${layout.filas} × ${layout.cols} = <strong>${porCapa} unidades por capa</strong>`;
 
   // ── Tabla por pallet ──
   let tablaHTML = '';
@@ -1720,54 +1788,140 @@ function calcCubicacion(){
     const ocup  = Math.round((unids/porPallet)*100);
     const color = ocup===100?'#a8e6c8':ocup>50?'#fef08a':'#fca5a5';
     tablaHTML += `<tr style="border-bottom:1px solid rgba(255,255,255,.08)">
-      <td style="padding:8px 12px;color:white;font-weight:700">Pallet ${i}${esUltimo?' <span style="font-size:.75em;color:#fca5a5">(incompleto)</span>':''}</td>
-      <td style="padding:8px 12px;text-align:right;color:white;font-weight:700">${unids}</td>
-      <td style="padding:8px 12px;text-align:right;color:rgba(255,255,255,.8)">${capas}</td>
-      <td style="padding:8px 12px;text-align:right;color:rgba(255,255,255,.8)">${alt}</td>
-      <td style="padding:8px 12px;text-align:right">
-        <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;color:${color};font-weight:700;font-size:.85em">${ocup}%</span>
+      <td style="padding:9px 14px;color:white;font-weight:700;font-size:.9em">Pallet ${i}${esUltimo?' <span style="font-size:.75em;color:#fca5a5">(incompleto)</span>':''}</td>
+      <td style="padding:9px 14px;text-align:right;color:white;font-weight:700;font-size:.95em">${unids}</td>
+      <td style="padding:9px 14px;text-align:right;color:rgba(255,255,255,.8);font-size:.9em">${capas}</td>
+      <td style="padding:9px 14px;text-align:right;color:rgba(255,255,255,.8);font-size:.9em">${alt}</td>
+      <td style="padding:9px 14px;text-align:right">
+        <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:4px 12px;color:${color};font-weight:700;font-size:.88em">${ocup}%</span>
       </td>
     </tr>`;
   }
-  document.getElementById('cubo-tabla-body').innerHTML = tablaHTML;
-  document.getElementById('cubo-tabla').style.display = 'block';
+  s('cubo-tabla-body').innerHTML = tablaHTML;
+  s('cubo-tabla').style.display = 'block';
 
-  // ── Dibujar vistas 2D top-down ──
-  if(mejor.mix){
-    drawVistaMix('canvas-vista-a', pal, pro, mejor.layout);
-    drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
-    document.getElementById('label-a').textContent = `— Mixta A+B ✅ ÓPTIMA (${mejor.porCapa} uds)`;
-    document.getElementById('label-b').textContent = `— Rotada (${porCapaB} uds)`;
-    document.getElementById('txt-a').textContent   = `Mixta: ${mejor.porCapa} unidades/capa`;
-    document.getElementById('txt-b').textContent   = `Rotada: ${porCapaB} unidades/capa`;
-    document.getElementById('orient-recomend').textContent =
-      `✅ Orientación mixta A+B → ${porCapa} unidades por capa — MÁXIMO APROVECHAMIENTO`;
-  } else {
-    drawVista('canvas-vista-a', pal, pro, filaA, colA, false);
-    drawVista('canvas-vista-b', pal, pro, filaB, colB, true);
-    const labelA = `— Normal (${porCapaA} uds)${porCapaA>=porCapaB?' ✅ ÓPTIMA':''}`;
-    const labelB = `— Rotada 90° (${porCapaB} uds)${porCapaB>porCapaA?' ✅ ÓPTIMA':''}`;
-    document.getElementById('label-a').textContent = labelA;
-    document.getElementById('label-b').textContent = labelB;
-    document.getElementById('txt-a').textContent   = `${filaA}×${colA} = ${porCapaA} uds/capa`;
-    document.getElementById('txt-b').textContent   = `${filaB}×${colB} = ${porCapaB} uds/capa`;
-    document.getElementById('orient-recomend').textContent =
-      `✅ Orientación recomendada: ${mejor.nombre} → ${porCapa} unidades por capa`;
-  }
-  document.getElementById('orient-b-wrap').style.display = 'block';
-  document.getElementById('cubo-visual').style.display   = 'block';
+  // ── Vista 2D — solo Opción A ──
+  drawVistaLayout('canvas-vista-a', pal, pro, layout);
+  s('label-a').textContent = layout.tipo==='patron4'
+    ? `— Patrón 4 uds/bloque ✅` : `— ${layout.filas}×${layout.cols} uds/capa ✅`;
+  s('txt-a').textContent = `${porCapa} unidades por capa`;
+  s('orient-b-wrap').style.display = 'none'; // sin opción B
+  s('cubo-visual').style.display   = 'block';
 
-  // ── Dibujar vista 3D ──
-  const capas3D = Math.min(capasPorPallet, 6); // máx 6 capas visibles en 3D
-  if(mejor.mix){
-    draw3DMix('canvas-3d-a', pal, pro, mejor.layout, capas3D, altMM);
-    draw3D('canvas-3d-b', pal, pro, filaB, colB, true, capas3D, altMM);
+  // ── Vista 3D — solo Opción A ──
+  const capas3D = Math.min(capasPorPallet, 5);
+  draw3DLayout('canvas-3d-a', pal, pro, layout, capas3D, altMM);
+  s('wrap-3d-b').style.display = 'none'; // sin opción B
+  s('cubo-3d').style.display   = 'block';
+}
+
+// ── Dibujar 2D según layout ──
+function drawVistaLayout(canvasId, pal, pro, layout){
+  const canvas = document.getElementById(canvasId); if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0,0,CW,CH);
+
+  const scale = Math.min((CW-50)/pal.w, (CH-50)/pal.l);
+  const offX  = (CW - pal.w*scale)/2;
+  const offY  = (CH - pal.l*scale)/2;
+
+  // Fondo pallet
+  ctx.fillStyle='rgba(139,90,43,.35)'; ctx.strokeStyle='rgba(180,120,50,.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(offX,offY,pal.w*scale,pal.l*scale,6); ctx.fill(); ctx.stroke();
+
+  if(layout.tipo==='cuadrado'){
+    // Productos cuadrados normales
+    for(let f=0;f<layout.filas;f++) for(let c=0;c<layout.cols;c++){
+      drawPieza(ctx, offX+f*pro.w*scale, offY+c*pro.l*scale, pro.w*scale-2, pro.l*scale-2, f*layout.cols+c+1, '#2e9e7a');
+    }
   } else {
-    draw3D('canvas-3d-a', pal, pro, filaA, colA, false, capas3D, altMM);
-    draw3D('canvas-3d-b', pal, pro, filaB, colB, true, capas3D, altMM);
+    // Patrón 4: por cada bloque 610x610, dibujar 2 normales + 2 rotadas
+    let n=1;
+    for(let bf=0;bf<layout.bFilas;bf++){
+      for(let bc=0;bc<layout.bCols;bc++){
+        const bx = offX + bf*layout.bloqueW*scale;
+        const by = offY + bc*layout.bloqueL*scale;
+        // Pieza 1: normal izq arriba (305x610)
+        drawPieza(ctx, bx, by, pro.w*scale-2, pro.l*scale-2, n++, '#2e9e7a');
+        // Pieza 2: rotada der arriba (610x305)
+        drawPieza(ctx, bx+pro.w*scale, by, pro.l*scale-2, pro.w*scale-2, n++, '#38bdf8');
+        // Pieza 3: rotada der abajo (610x305)
+        drawPieza(ctx, bx+pro.w*scale, by+pro.w*scale, pro.l*scale-2, pro.w*scale-2, n++, '#38bdf8');
+        // Pieza 4: normal izq abajo (305x610)
+        drawPieza(ctx, bx, by+pro.l*scale, pro.w*scale-2, pro.l*scale-2, n++, '#2e9e7a');
+      }
+    }
+    // Leyenda colores
+    ctx.fillStyle='#2e9e7a'; ctx.fillRect(offX+2, offY+pal.l*scale+18, 12, 12);
+    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='9px Segoe UI'; ctx.textAlign='left';
+    ctx.fillText('Normal', offX+17, offY+pal.l*scale+28);
+    ctx.fillStyle='#38bdf8'; ctx.fillRect(offX+65, offY+pal.l*scale+18, 12, 12);
+    ctx.fillStyle='rgba(255,255,255,.6)';
+    ctx.fillText('Rotada', offX+80, offY+pal.l*scale+28);
   }
-  document.getElementById('wrap-3d-b').style.display = 'block';
-  document.getElementById('cubo-3d').style.display   = 'block';
+
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`${pal.w}×${pal.l} mm`, CW/2, offY-6);
+}
+
+function drawPieza(ctx, x, y, w, h, num, color){
+  ctx.fillStyle = color+'cc';
+  ctx.strokeStyle = 'rgba(255,255,255,.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(x+1, y+1, w, h, 3); ctx.fill(); ctx.stroke();
+  if(w>14 && h>12){
+    ctx.fillStyle='rgba(255,255,255,.95)';
+    ctx.font=`bold ${Math.min(13,Math.min(w,h)/2.2)}px Segoe UI`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(num, x+w/2+1, y+h/2+1);
+  }
+}
+
+// ── Dibujar 3D según layout ──
+function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM){
+  const canvas = document.getElementById(canvasId); if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0,0,CW,CH);
+
+  const sc = Math.min((CW-10)/pal.w*0.52, (CH-40)/pal.l*0.52);
+  const isoX = (x,y) => CW/2 + (x - y)*sc*0.866;
+  const isoY = (x,y,z) => CH*0.75 - (x+y)*sc*0.5 - z*(altMM/pal.w)*sc*11;
+
+  // Base pallet
+  drawIsoBox(ctx,isoX,isoY, 0,0,-80, pal.w,pal.l,80,
+    'rgba(160,100,40,.9)','rgba(110,65,20,.9)','rgba(135,80,30,.9)');
+
+  for(let capa=0; capa<numCapas; capa++){
+    const z = capa * altMM;
+    const dark = capa * 5;
+    if(layout.tipo==='cuadrado'){
+      for(let f=0;f<layout.filas;f++) for(let c=0;c<layout.cols;c++){
+        const hue = 160+f*18;
+        drawIsoBox(ctx,isoX,isoY, f*pro.w, c*pro.l, z, pro.w-3,pro.l-3,altMM-2,
+          `hsla(${hue},55%,${45-dark}%,.92)`,`hsla(${hue},55%,${33-dark}%,.92)`,`hsla(${hue},55%,${39-dark}%,.92)`);
+      }
+    } else {
+      for(let bf=0;bf<layout.bFilas;bf++) for(let bc=0;bc<layout.bCols;bc++){
+        const bx=bf*layout.bloqueW, by=bc*layout.bloqueL;
+        // Normal izq arriba
+        drawIsoBox(ctx,isoX,isoY, bx,by,z, pro.w-3,pro.l-3,altMM-2,
+          `hsla(160,55%,${45-dark}%,.92)`,`hsla(160,55%,${33-dark}%,.92)`,`hsla(160,55%,${39-dark}%,.92)`);
+        // Rotada der arriba
+        drawIsoBox(ctx,isoX,isoY, bx+pro.w,by,z, pro.l-3,pro.w-3,altMM-2,
+          `hsla(200,60%,${45-dark}%,.92)`,`hsla(200,60%,${33-dark}%,.92)`,`hsla(200,60%,${39-dark}%,.92)`);
+        // Rotada der abajo
+        drawIsoBox(ctx,isoX,isoY, bx+pro.w,by+pro.w,z, pro.l-3,pro.w-3,altMM-2,
+          `hsla(200,60%,${45-dark}%,.92)`,`hsla(200,60%,${33-dark}%,.92)`,`hsla(200,60%,${39-dark}%,.92)`);
+        // Normal izq abajo
+        drawIsoBox(ctx,isoX,isoY, bx,by+pro.l,z, pro.w-3,pro.l-3,altMM-2,
+          `hsla(160,55%,${45-dark}%,.92)`,`hsla(160,55%,${33-dark}%,.92)`,`hsla(160,55%,${39-dark}%,.92)`);
+      }
+    }
+  }
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`${numCapas} capas visibles`, CW/2, CH-4);
 }
 
 function drawVista(canvasId, pal, pro, filas, cols, rotado){
