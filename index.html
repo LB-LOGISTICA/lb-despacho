@@ -563,16 +563,6 @@ input[type="file"]{display:none;}
     <!-- PANEL DERECHO: RESULTADOS -->
     <div style="display:flex;flex-direction:column;gap:14px" id="cubo-results-panel">
 
-      <!-- KPIs resultado — 6 cards -->
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">
-        <div class="d-card"><h3>Pallets</h3><p id="res-pallets" style="font-size:2.4em">—</p></div>
-        <div class="d-card"><h3>Altura Pallet</h3><p id="res-altura" style="font-size:2.4em">—</p><small style="color:rgba(255,255,255,.5)">cm</small></div>
-        <div class="d-card"><h3>Unid./Pallet</h3><p id="res-por-pallet" style="font-size:2.4em">—</p></div>
-        <div class="d-card"><h3>Unid./Capa</h3><p id="res-por-capa" style="font-size:2.4em">—</p></div>
-        <div class="d-card"><h3>Capas/Pallet</h3><p id="res-capas" style="font-size:2.4em">—</p></div>
-        <div class="d-card"><h3>Último Pallet</h3><p id="res-ultimo" style="font-size:2.4em">—</p><small id="res-ultimo-label" style="color:rgba(255,255,255,.45)"></small></div>
-      </div>
-
       <!-- FILA: detalle + 3D -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 
@@ -1735,8 +1725,9 @@ function calcCubicacion(){
     return;
   }
 
-  // ── Altura máxima 1200mm útiles (120cm) ──
-  const maxAltUtil     = 1200; // mm
+  // ── Altura máxima TOTAL del pallet = 120cm (incluye base de 14cm) ──
+  const ALTURA_MAX_TOTAL_CM = 120;
+  const maxAltUtil      = (ALTURA_MAX_TOTAL_CM - PALLET_BASE_H) * 10; // mm útiles para productos
   const capasPorPallet = Math.floor(maxAltUtil / altMM);
   const porPallet      = porCapa * capasPorPallet;
   const palletsCompletos = Math.floor(qty / porPallet);
@@ -1747,14 +1738,15 @@ function calcCubicacion(){
   const altPalletCm      = +(PALLET_BASE_H + (capasPorPallet * altMM)/10).toFixed(1);
   const altUltimoCm      = +(PALLET_BASE_H + (capasUltimo * altMM)/10).toFixed(1);
 
-  // ── KPIs ──
+  // ── KPIs (si existen en el DOM) ──
   const s = id => document.getElementById(id);
-  s('res-pallets').textContent    = totalPallets;
-  s('res-altura').textContent     = altPalletCm;
-  s('res-por-pallet').textContent = porPallet;
-  s('res-por-capa').textContent   = porCapa;
-  s('res-capas').textContent      = capasPorPallet;
-  s('res-ultimo').textContent     = unidUltimo === porPallet ? porPallet : unidUltimo;
+  const setText = (id, val) => { const el = s(id); if(el) el.textContent = val; };
+  setText('res-pallets', totalPallets);
+  setText('res-altura', altPalletCm);
+  setText('res-por-pallet', porPallet);
+  setText('res-por-capa', porCapa);
+  setText('res-capas', capasPorPallet);
+  setText('res-ultimo', unidUltimo === porPallet ? porPallet : unidUltimo);
   const ultimoLabel = s('res-ultimo-label');
   if(ultimoLabel) ultimoLabel.textContent = resto > 0 ? `(${capasUltimo} capas · ${altUltimoCm} cm)` : 'completo';
   s('cubo-empty').style.display = 'none';
