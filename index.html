@@ -563,55 +563,37 @@ input[type="file"]{display:none;}
     <!-- PANEL DERECHO: RESULTADOS -->
     <div style="display:flex;flex-direction:column;gap:14px" id="cubo-results-panel">
 
-      <!-- FILA: detalle + 3D -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-
-        <!-- DETALLE -->
-        <div class="chart-card" id="cubo-detalle" style="display:none">
-          <div class="chart-card-title">📊 Resumen de cubicación</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div>
-              <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
-              <div id="detalle-capa" style="color:white;font-size:.88em;line-height:2.1"></div>
-            </div>
-            <div>
-              <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
-              <div id="detalle-pallet" style="color:white;font-size:.88em;line-height:2.1"></div>
-            </div>
+      <!-- RESUMEN — full width arriba -->
+      <div class="chart-card" id="cubo-detalle" style="display:none">
+        <div class="chart-card-title">📊 Resumen de cubicación</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
+            <div id="detalle-capa" style="color:white;font-size:.88em;line-height:2.1"></div>
           </div>
-          <div id="orient-recomend" style="margin-top:14px;font-size:.88em;color:#a8e6c8;font-weight:600;background:rgba(46,158,122,.15);border-radius:8px;padding:8px 12px"></div>
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
+            <div id="detalle-pallet" style="color:white;font-size:.88em;line-height:2.1"></div>
+          </div>
         </div>
+        <div id="orient-recomend" style="margin-top:14px;font-size:.88em;color:#a8e6c8;font-weight:600;background:rgba(46,158,122,.15);border-radius:8px;padding:8px 12px"></div>
+      </div>
 
-        <!-- VISTA 3D ISOMÉTRICA -->
-        <div class="chart-card" id="cubo-3d" style="display:none">
-          <div class="chart-card-title">🎲 Vista 3D — Pallet completo</div>
-          <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
-            <div style="text-align:center">
-              <div style="color:rgba(255,255,255,.5);font-size:.72em;margin-bottom:6px">Opción A</div>
-              <canvas id="canvas-3d-a" width="240" height="240" style="border-radius:8px"></canvas>
-            </div>
-            <div style="text-align:center" id="wrap-3d-b">
-              <div style="color:rgba(255,255,255,.5);font-size:.72em;margin-bottom:6px">Opción B</div>
-              <canvas id="canvas-3d-b" width="240" height="240" style="border-radius:8px"></canvas>
-            </div>
-          </div>
+      <!-- VISTA 3D ISOMÉTRICA — única, con flecha de medida -->
+      <div class="chart-card" id="cubo-3d" style="display:none">
+        <div class="chart-card-title">🎲 Vista 3D — Pallet completo</div>
+        <div style="display:flex;justify-content:center">
+          <canvas id="canvas-3d-a" width="360" height="380" style="border-radius:8px"></canvas>
         </div>
       </div>
 
-      <!-- VISTAS TOP-DOWN: A y B siempre visibles -->
+      <!-- VISTA TOP-DOWN -->
       <div class="chart-card" id="cubo-visual" style="display:none">
-        <div class="chart-card-title">🔭 Vista superior — distribución en pallet</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-          <div style="text-align:center">
-            <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Opción A <span id="label-a" style="color:#a8e6c8"></span></div>
-            <canvas id="canvas-vista-a" width="300" height="300" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
-            <div id="txt-a" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
-          </div>
-          <div style="text-align:center" id="orient-b-wrap">
-            <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Opción B <span id="label-b" style="color:#38bdf8"></span></div>
-            <canvas id="canvas-vista-b" width="300" height="300" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
-            <div id="txt-b" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
-          </div>
+        <div class="chart-card-title">🔭 Vista superior — distribución por capa</div>
+        <div style="text-align:center">
+          <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Distribución <span id="label-a" style="color:#a8e6c8"></span></div>
+          <canvas id="canvas-vista-a" width="300" height="300" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
+          <div id="txt-a" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
         </div>
       </div>
 
@@ -747,6 +729,22 @@ input[type="file"]{display:none;}
 <div class="wms-toast" id="wms-toast"></div>
 
 <script>
+// ══════════════════════════════════════════════
+//  HELPER FECHAS — agrupar por mes según fecha de DESPACHO
+// ══════════════════════════════════════════════
+// Devuelve "aaaa-mm" a partir de la FECHA DE DESPACHO (fdesp, formato dd-mm-aaaa).
+// Si no hay fecha de despacho, usa fechaObj (fecha de ingreso) como respaldo.
+function despMes(d){
+  if(d.fdesp){
+    const parts = d.fdesp.split('-');
+    if(parts.length===3){
+      const [dd,mm,yyyy] = parts;
+      if(yyyy && mm) return `${yyyy}-${mm.padStart(2,'0')}`;
+    }
+  }
+  return d.fechaObj ? d.fechaObj.substring(0,7) : null;
+}
+
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG
 // ══════════════════════════════════════════════
@@ -1005,7 +1003,7 @@ function renderDespachos(){
     d.of?.toLowerCase().includes(q)||d.guia?.toLowerCase().includes(q)||
     d.desc1?.toLowerCase().includes(q)||d.desc2?.toLowerCase().includes(q));
   if(estado)  list = list.filter(d=>d.estado===estado);
-  if(mes)     list = list.filter(d=>d.fechaIngreso?.includes('/'+mes+'/')||d.fechaObj?.startsWith(mes));
+  if(mes)     list = list.filter(d=>despMes(d)===mes);
   if(quarter) list = list.filter(d=>d.quarter===quarter);
 
   // Column filters
@@ -1069,7 +1067,7 @@ function renderDespachos(){
 // ══════════════════════════════════════════════
 function updateKpiDespachos(){
   const mesActual = new Date().toISOString().substring(0,7);
-  const despachosMes = despachos.filter(d=>d.fechaObj?.startsWith(mesActual));
+  const despachosMes = despachos.filter(d=>despMes(d)===mesActual);
   const palletsMes   = despachosMes.reduce((s,d)=>s+(d.pallets||0),0);
   const ocTotal      = new Set(despachos.map(d=>d.oc).filter(Boolean)).size;
   const guiasTotal   = despachos.filter(d=>d.guia).length;
@@ -1093,10 +1091,7 @@ function updateKpiDespachos(){
 function fillMesFilter(){
   const sel = document.getElementById('desp-filter-mes');
   if(!sel) return;
-  const meses = [...new Set(despachos.map(d=>{
-    if(d.fechaObj) return d.fechaObj.substring(0,7);
-    return null;
-  }).filter(Boolean))].sort().reverse();
+  const meses = [...new Set(despachos.map(d=>despMes(d)).filter(Boolean))].sort().reverse();
   const cur = sel.value;
   sel.innerHTML = '<option value="">Todos los meses</option>' +
     meses.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
@@ -1363,13 +1358,13 @@ function getDashFiltered(){
   const e = (document.getElementById('dash-f-estado')||{value:''}).value;
   return despachos.filter(d=>
     (!q || d.quarter===q) &&
-    (!m || d.fechaObj?.startsWith(m)) &&
+    (!m || despMes(d)===m) &&
     (!c || d.cliente===c) &&
     (!e || d.estado===e)
   );
 }
 function fillDashFilters(){
-  const meses    = [...new Set(despachos.map(d=>d.fechaObj?.substring(0,7)).filter(Boolean))].sort().reverse();
+  const meses    = [...new Set(despachos.map(d=>despMes(d)).filter(Boolean))].sort().reverse();
   const clientes = [...new Set(despachos.map(d=>d.cliente).filter(Boolean))].sort();
   const selMes = document.getElementById('dash-f-mes');
   const selCli = document.getElementById('dash-f-cliente');
@@ -1390,7 +1385,7 @@ const _charts = {};
 function destroyChart(id){ if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; } }
 
 function getMeses(data){
-  const allM = [...new Set(data.map(d=>d.fechaObj?.substring(0,7)).filter(Boolean))];
+  const allM = [...new Set(data.map(d=>despMes(d)).filter(Boolean))];
   const last6 = [];
   for(let i=5;i>=0;i--){ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i); last6.push(d.toISOString().substring(0,7)); }
   const combined = [...new Set([...last6,...allM])].sort();
@@ -1448,7 +1443,7 @@ function renderDashboard(){
 
 function updateDashKpi(data){
   const mes   = new Date().toISOString().substring(0,7);
-  const pMes  = data.filter(d=>d.fechaObj?.startsWith(mes)).reduce((s,d)=>s+(d.pallets||0),0);
+  const pMes  = data.filter(d=>despMes(d)===mes).reduce((s,d)=>s+(d.pallets||0),0);
   const ocU   = new Set(data.map(d=>d.oc).filter(Boolean)).size;
   const guias = data.filter(d=>d.guia).length;
   const vol   = data.reduce((s,d)=>s+(d.vol||0),0);
@@ -1468,7 +1463,7 @@ function renderChartPalletsMes(data){
   const ctx = document.getElementById('chart-pallets-mes'); if(!ctx) return;
   destroyChart('pallets-mes');
   const {keys,labels} = getMeses(data);
-  const vals = keys.map(m=>data.filter(d=>d.fechaObj?.startsWith(m)).reduce((s,d)=>s+(d.pallets||0),0));
+  const vals = keys.map(m=>data.filter(d=>despMes(d)===m).reduce((s,d)=>s+(d.pallets||0),0));
   _charts['pallets-mes'] = new Chart(ctx,{
     type:'bar', plugins:[DATALABELS_PLUGIN],
     data:{labels,datasets:[{label:'Pallets',data:vals,backgroundColor:'rgba(46,158,122,.75)',borderColor:'#2e9e7a',borderWidth:2,borderRadius:6}]},
@@ -1480,7 +1475,7 @@ function renderChartOcMes(data){
   const ctx = document.getElementById('chart-oc-mes'); if(!ctx) return;
   destroyChart('oc-mes');
   const {keys,labels} = getMeses(data);
-  const vals = keys.map(m=>new Set(data.filter(d=>d.fechaObj?.startsWith(m)).map(d=>d.oc).filter(Boolean)).size);
+  const vals = keys.map(m=>new Set(data.filter(d=>despMes(d)===m).map(d=>d.oc).filter(Boolean)).size);
   _charts['oc-mes'] = new Chart(ctx,{
     type:'bar', plugins:[DATALABELS_PLUGIN],
     data:{labels,datasets:[{label:'OC',data:vals,backgroundColor:'rgba(168,100,220,.7)',borderColor:'#a864dc',borderWidth:2,borderRadius:6}]},
@@ -1492,7 +1487,7 @@ function renderChartVolMes(data){
   const ctx = document.getElementById('chart-vol-mes'); if(!ctx) return;
   destroyChart('vol-mes');
   const {keys,labels} = getMeses(data);
-  const vals = keys.map(m=>+data.filter(d=>d.fechaObj?.startsWith(m)).reduce((s,d)=>s+(d.vol||0),0).toFixed(2));
+  const vals = keys.map(m=>+data.filter(d=>despMes(d)===m).reduce((s,d)=>s+(d.vol||0),0).toFixed(2));
   _charts['vol-mes'] = new Chart(ctx,{
     type:'line', plugins:[DATALABELS_PLUGIN],
     data:{labels,datasets:[{label:'m³',data:vals,borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,.18)',borderWidth:2,fill:true,tension:.4,pointBackgroundColor:'#38bdf8',pointRadius:5,pointHoverRadius:7}]},
@@ -1792,19 +1787,16 @@ function calcCubicacion(){
   s('cubo-tabla-body').innerHTML = tablaHTML;
   s('cubo-tabla').style.display = 'block';
 
-  // ── Vista 2D — solo Opción A ──
+  // ── Vista 2D — distribución por capa ──
   drawVistaLayout('canvas-vista-a', pal, pro, layout);
   s('label-a').textContent = layout.tipo==='patron4'
     ? `— Patrón 4 uds/bloque ✅` : `— ${layout.filas}×${layout.cols} uds/capa ✅`;
   s('txt-a').textContent = `${porCapa} unidades por capa`;
-  s('orient-b-wrap').style.display = 'none'; // sin opción B
-  s('cubo-visual').style.display   = 'block';
+  s('cubo-visual').style.display = 'block';
 
-  // ── Vista 3D — solo Opción A ──
-  const capas3D = Math.min(capasPorPallet, 5);
-  draw3DLayout('canvas-3d-a', pal, pro, layout, capas3D, altMM);
-  s('wrap-3d-b').style.display = 'none'; // sin opción B
-  s('cubo-3d').style.display   = 'block';
+  // ── Vista 3D — pallet completo siempre consistente, con flecha de 120cm ──
+  draw3DLayout('canvas-3d-a', pal, pro, layout, capasPorPallet, altMM, altPalletCm);
+  s('cubo-3d').style.display = 'block';
 }
 
 // ── Dibujar 2D según layout ──
@@ -1870,24 +1862,33 @@ function drawPieza(ctx, x, y, w, h, num, color){
   }
 }
 
-// ── Dibujar 3D según layout ──
-function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM){
+// ── Dibujar 3D según layout — escala SIEMPRE consistente respecto a 120cm totales ──
+function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM, altPalletCm){
   const canvas = document.getElementById(canvasId); if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const CW = canvas.width, CH = canvas.height;
   ctx.clearRect(0,0,CW,CH);
 
-  const sc = Math.min((CW-10)/pal.w*0.52, (CH-40)/pal.l*0.52);
-  const isoX = (x,y) => CW/2 + (x - y)*sc*0.866;
-  const isoY = (x,y,z) => CH*0.75 - (x+y)*sc*0.5 - z*(altMM/pal.w)*sc*11;
+  const ALTURA_MAX_CM = 120;          // referencia fija siempre
+  const ALTURA_MAX_MM = ALTURA_MAX_CM * 10;
+  const baseH = PALLET_BASE_H * 10;   // 140mm
 
-  // Base pallet
-  drawIsoBox(ctx,isoX,isoY, 0,0,-80, pal.w,pal.l,80,
-    'rgba(160,100,40,.9)','rgba(110,65,20,.9)','rgba(135,80,30,.9)');
+  // Escala horizontal (planta) y vertical (altura) — la vertical SIEMPRE
+  // se calcula sobre los 120cm máximos, así el dibujo es comparable entre cálculos.
+  const scH = Math.min((CW-20)/pal.w, (CW-20)/pal.l) * 0.46;
+  const scV = (CH-70) / ALTURA_MAX_MM; // mm → px, fijo siempre
 
+  const isoX = (x,y)   => CW/2 + (x - y) * scH * 0.866;
+  const isoY = (x,y,z) => CH-46 - (x+y) * scH * 0.5 - z * scV;
+
+  // Base pallet (madera)
+  drawIsoBox(ctx,isoX,isoY, 0,0,-baseH, pal.w,pal.l,baseH,
+    'rgba(170,110,45,.95)','rgba(115,68,22,.95)','rgba(140,85,32,.95)');
+
+  // Capas de producto reales
   for(let capa=0; capa<numCapas; capa++){
     const z = capa * altMM;
-    const dark = capa * 5;
+    const dark = Math.min(capa * 4, 28);
     if(layout.tipo==='cuadrado'){
       for(let f=0;f<layout.filas;f++) for(let c=0;c<layout.cols;c++){
         const hue = 160+f*18;
@@ -1897,23 +1898,65 @@ function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM){
     } else {
       for(let bf=0;bf<layout.bFilas;bf++) for(let bc=0;bc<layout.bCols;bc++){
         const bx=bf*layout.bloqueW, by=bc*layout.bloqueL;
-        // Normal izq arriba
         drawIsoBox(ctx,isoX,isoY, bx,by,z, pro.w-3,pro.l-3,altMM-2,
           `hsla(160,55%,${45-dark}%,.92)`,`hsla(160,55%,${33-dark}%,.92)`,`hsla(160,55%,${39-dark}%,.92)`);
-        // Rotada der arriba
         drawIsoBox(ctx,isoX,isoY, bx+pro.w,by,z, pro.l-3,pro.w-3,altMM-2,
           `hsla(200,60%,${45-dark}%,.92)`,`hsla(200,60%,${33-dark}%,.92)`,`hsla(200,60%,${39-dark}%,.92)`);
-        // Rotada der abajo
         drawIsoBox(ctx,isoX,isoY, bx+pro.w,by+pro.w,z, pro.l-3,pro.w-3,altMM-2,
           `hsla(200,60%,${45-dark}%,.92)`,`hsla(200,60%,${33-dark}%,.92)`,`hsla(200,60%,${39-dark}%,.92)`);
-        // Normal izq abajo
         drawIsoBox(ctx,isoX,isoY, bx,by+pro.l,z, pro.w-3,pro.l-3,altMM-2,
           `hsla(160,55%,${45-dark}%,.92)`,`hsla(160,55%,${33-dark}%,.92)`,`hsla(160,55%,${39-dark}%,.92)`);
       }
     }
   }
+
+  // ── Flecha de medida vertical: desde el piso (base del pallet) hasta 120cm ──
+  const arrowX = CW - 34;
+  const yFloor = isoY(0, pal.l, -baseH);      // nivel del piso (suelo)
+  const yTop   = isoY(0, pal.l, ALTURA_MAX_MM - baseH); // tope a 120cm desde el piso
+  ctx.strokeStyle = 'rgba(255,255,255,.55)';
+  ctx.fillStyle   = 'rgba(255,255,255,.55)';
+  ctx.lineWidth = 1.5;
+  // línea vertical
+  ctx.beginPath(); ctx.moveTo(arrowX, yFloor); ctx.lineTo(arrowX, yTop); ctx.stroke();
+  // flechas en ambos extremos
+  drawArrowHead(ctx, arrowX, yFloor, 'down');
+  drawArrowHead(ctx, arrowX, yTop, 'up');
+  // ticks horizontales en los extremos
+  ctx.beginPath(); ctx.moveTo(arrowX-5,yFloor); ctx.lineTo(arrowX+5,yFloor); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(arrowX-5,yTop); ctx.lineTo(arrowX+5,yTop); ctx.stroke();
+  // etiqueta de medida
+  ctx.save();
+  ctx.translate(arrowX+14, (yFloor+yTop)/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.font = 'bold 11px Segoe UI';
+  ctx.textAlign = 'center'; ctx.textBaseline='middle';
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.fillText('120 cm máx.', 0, 0);
+  ctx.restore();
+  // marca de altura real ocupada
+  const yRealTop = isoY(0, pal.l, numCapas*altMM - baseH);
+  ctx.setLineDash([3,3]);
+  ctx.strokeStyle = 'rgba(168,230,200,.7)';
+  ctx.beginPath(); ctx.moveTo(arrowX-5, yRealTop); ctx.lineTo(arrowX+5, yRealTop); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(168,230,200,.9)';
+  ctx.font = 'bold 10px Segoe UI'; ctx.textAlign='left';
+  ctx.fillText(`${altPalletCm} cm`, arrowX+8, yRealTop+3);
+
   ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
-  ctx.fillText(`${numCapas} capas visibles`, CW/2, CH-4);
+  ctx.fillText(`${numCapas} capas · altura producto ${altMM}mm`, CW/2-10, CH-8);
+}
+
+function drawArrowHead(ctx, x, y, dir){
+  const s = 5;
+  ctx.beginPath();
+  if(dir==='down'){
+    ctx.moveTo(x,y); ctx.lineTo(x-s,y-s); ctx.lineTo(x+s,y-s);
+  } else {
+    ctx.moveTo(x,y); ctx.lineTo(x-s,y+s); ctx.lineTo(x+s,y+s);
+  }
+  ctx.closePath(); ctx.fill();
 }
 
 function drawVista(canvasId, pal, pro, filas, cols, rotado){
