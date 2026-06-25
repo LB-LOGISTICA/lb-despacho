@@ -1620,6 +1620,9 @@ function renderChartPalletsMes(data){
   destroyChart('pallets-mes');
   const {keys,labels} = getMeses(data);
   const vals = keys.map(m=>data.filter(d=>despMes(d)===m).reduce((s,d)=>s+(d.pallets||0),0));
+  console.log('🔍 DEBUG renderChartPalletsMes — keys:', keys, 'labels:', labels, 'vals:', vals);
+  console.log('🔍 DEBUG total despachos en data:', data.length);
+  console.log('🔍 DEBUG ejemplo de fdesp de los primeros 5:', data.slice(0,5).map(d=>({cliente:d.cliente, fdesp:d.fdesp, despMesCalc:despMes(d)})));
   _charts['pallets-mes'] = new Chart(ctx,{
     type:'bar', plugins:[DATALABELS_PLUGIN],
     data:{labels,datasets:[{label:'Pallets',data:vals,backgroundColor:'rgba(46,158,122,.75)',borderColor:'#2e9e7a',borderWidth:2,borderRadius:6}]},
