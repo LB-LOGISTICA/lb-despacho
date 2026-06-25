@@ -491,18 +491,48 @@ input[type="file"]{display:none;}
       <!-- TIPO DE PALLET -->
       <div class="chart-card">
         <div class="chart-card-title">🪵 Tipo de Pallet</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
           <div id="pallet-opt-950" onclick="selectPallet('950x950')"
-            style="border:2px solid #2e9e7a;border-radius:12px;padding:14px;cursor:pointer;text-align:center;background:rgba(46,158,122,.2);transition:all .2s">
+            style="border:2px solid #2e9e7a;border-radius:12px;padding:14px 8px;cursor:pointer;text-align:center;background:rgba(46,158,122,.2);transition:all .2s">
             <div style="font-size:1.3em">🟫</div>
-            <div style="color:white;font-weight:700;font-size:.95em;margin-top:6px">950 × 950</div>
-            <div style="color:rgba(255,255,255,.5);font-size:.75em">mm</div>
+            <div style="color:white;font-weight:700;font-size:.9em;margin-top:6px">950 × 950</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em">mm</div>
           </div>
           <div id="pallet-opt-1000" onclick="selectPallet('1000x1200')"
-            style="border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:14px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);transition:all .2s">
+            style="border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:14px 8px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);transition:all .2s">
             <div style="font-size:1.3em">🟫</div>
-            <div style="color:white;font-weight:700;font-size:.95em;margin-top:6px">1000 × 1200</div>
-            <div style="color:rgba(255,255,255,.5);font-size:.75em">mm</div>
+            <div style="color:white;font-weight:700;font-size:.9em;margin-top:6px">1000 × 1200</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em">mm</div>
+          </div>
+          <div id="pallet-opt-custom" onclick="selectPallet('custom')"
+            style="border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:14px 8px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);transition:all .2s">
+            <div style="font-size:1.3em">✏️</div>
+            <div style="color:white;font-weight:700;font-size:.9em;margin-top:6px">Personalizado</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em">mm</div>
+          </div>
+        </div>
+
+        <!-- INPUTS PALLET PERSONALIZADO -->
+        <div id="pallet-custom-inputs" style="display:none;margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;display:block;margin-bottom:5px">Ancho (mm)</label>
+              <input id="pallet-custom-w" type="number" min="1" placeholder="ej: 1100" value="950"
+                oninput="updatePalletCustom()"
+                style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-size:.9em;outline:none">
+            </div>
+            <div>
+              <label style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;display:block;margin-bottom:5px">Largo (mm)</label>
+              <input id="pallet-custom-l" type="number" min="1" placeholder="ej: 1100" value="950"
+                oninput="updatePalletCustom()"
+                style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-size:.9em;outline:none">
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <label style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;display:block;margin-bottom:5px">Alto base del pallet (cm)</label>
+            <input id="pallet-custom-h" type="number" min="1" placeholder="ej: 14" value="14"
+              oninput="updatePalletCustom()"
+              style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-size:.9em;outline:none">
           </div>
         </div>
       </div>
@@ -1434,10 +1464,9 @@ const _charts = {};
 function destroyChart(id){ if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; } }
 
 function getMeses(data){
-  const allM = [...new Set(data.map(d=>despMes(d)).filter(Boolean))];
-  const last6 = [];
-  for(let i=5;i>=0;i--){ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i); last6.push(d.toISOString().substring(0,7)); }
-  const combined = [...new Set([...last6,...allM])].sort();
+  const allM = [...new Set(data.map(d=>despMes(d)).filter(Boolean))].sort();
+  // Si no hay datos en absoluto, mostrar al menos el mes actual para no dejar el gráfico vacío
+  const combined = allM.length ? allM : [new Date().toISOString().substring(0,7)];
   return {
     keys: combined,
     labels: combined.map(k=>{ const d=new Date(k+'-01'); return d.toLocaleDateString('es-CL',{month:'short',year:'2-digit'}); })
@@ -1644,14 +1673,15 @@ function renderTablaClientes(data){
 // ══════════════════════════════════════════════
 const PALLETS = {
   '950x950':  { w:950,  l:950,  label:'950×950 mm' },
-  '1000x1200':{ w:1000, l:1200, label:'1000×1200 mm' }
+  '1000x1200':{ w:1000, l:1200, label:'1000×1200 mm' },
+  'custom':   { w:950,  l:950,  label:'Personalizado' } // se actualiza dinámicamente
 };
 const PRODUCTOS = {
   '305x305': { w:305, l:305, label:'305×305 mm' },
   '305x610': { w:305, l:610, label:'305×610 mm' }
 };
 const ALTURAS = [30,36,40,50,60,65,70,80];
-const PALLET_BASE_H = 14; // altura base pallet en cm
+let PALLET_BASE_H = 14; // altura base pallet en cm (variable si es personalizado)
 
 let cuboState = {
   pallet: '950x950',
@@ -1675,14 +1705,34 @@ let cuboState = {
 
 function selectPallet(key){
   cuboState.pallet = key;
-  ['950x950','1000x1200'].forEach(k=>{
-    const el = document.getElementById('pallet-opt-'+k.replace('x','x'));
+  const idMap = { '950x950':'pallet-opt-950', '1000x1200':'pallet-opt-1000', 'custom':'pallet-opt-custom' };
+  Object.entries(idMap).forEach(([k,id])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
     const sel = k===key;
-    if(k==='950x950') document.getElementById('pallet-opt-950').style.border=sel?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
-    if(k==='950x950') document.getElementById('pallet-opt-950').style.background=sel?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
-    if(k==='1000x1200') document.getElementById('pallet-opt-1000').style.border=sel?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
-    if(k==='1000x1200') document.getElementById('pallet-opt-1000').style.background=sel?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
+    el.style.border = sel?'2px solid #2e9e7a':'2px solid rgba(255,255,255,.2)';
+    el.style.background = sel?'rgba(46,158,122,.2)':'rgba(255,255,255,.05)';
   });
+  // Mostrar/ocultar inputs personalizados
+  const customWrap = document.getElementById('pallet-custom-inputs');
+  if(customWrap) customWrap.style.display = key==='custom' ? 'block' : 'none';
+  if(key==='custom'){
+    updatePalletCustom();
+  } else {
+    PALLET_BASE_H = 14; // restaurar base estándar para pallets predefinidos
+    calcCubicacion();
+  }
+}
+
+function updatePalletCustom(){
+  const w = parseFloat(document.getElementById('pallet-custom-w').value) || 950;
+  const l = parseFloat(document.getElementById('pallet-custom-l').value) || 950;
+  const h = parseFloat(document.getElementById('pallet-custom-h').value) || 14;
+  PALLETS['custom'].w = w;
+  PALLETS['custom'].l = l;
+  PALLETS['custom'].label = `${w}×${l} mm (personalizado)`;
+  PALLET_BASE_H = h;
+  cuboState.pallet = 'custom';
   calcCubicacion();
 }
 
