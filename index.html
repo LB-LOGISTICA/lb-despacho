@@ -739,18 +739,15 @@ input[type="file"]{display:none;}
 // Si no hay fecha de despacho, usa fechaObj (fecha de ingreso) como respaldo.
 function despMes(d){
   if(d.fdesp){
-    const parts = d.fdesp.split('-');
+    const parts = d.fdesp.trim().split('-').map(p=>p.trim());
     if(parts.length===3){
-      // Detectar cuál de las 3 partes es el año (la de 4 dígitos)
-      const yIdx = parts.findIndex(p => p.length===4);
-      if(yIdx === 0){
+      const yIdx = parts.findIndex(p => p.length===4 && /^\d{4}$/.test(p));
+      if(yIdx === 0 && /^\d{1,2}$/.test(parts[1])){
         // aaaa-mm-dd
-        const [yyyy,mm] = parts;
-        if(yyyy && mm) return `${yyyy}-${mm.padStart(2,'0')}`;
-      } else if(yIdx === 2){
+        return `${parts[0]}-${parts[1].padStart(2,'0')}`;
+      } else if(yIdx === 2 && /^\d{1,2}$/.test(parts[1])){
         // dd-mm-aaaa
-        const [dd,mm,yyyy] = parts;
-        if(yyyy && mm) return `${yyyy}-${mm.padStart(2,'0')}`;
+        return `${parts[2]}-${parts[1].padStart(2,'0')}`;
       }
     }
   }
@@ -908,7 +905,7 @@ async function saveDespacho(){
     dim,
     vol:          parseFloat(vol.toFixed(3)),
     quarter:      getQuarter(now.toISOString()),
-    fdesp:        document.getElementById('d-fdesp').value,
+    fdesp:        formatFecha(document.getElementById('d-fdesp').value),
     estado:       document.getElementById('d-estado').value,
     pallets:      parseFloat(document.getElementById('d-pallets').value)||0,
     guia:         document.getElementById('d-guia').value.trim(),
@@ -954,7 +951,7 @@ async function saveEditDespacho(){
     ...despachos[idx],
     guia:    document.getElementById('dedit-guia').value.trim(),
     pallets: parseFloat(document.getElementById('dedit-pallets').value)||0,
-    fdesp:   document.getElementById('dedit-fdesp').value,
+    fdesp:   formatFecha(document.getElementById('dedit-fdesp').value),
     estado:  document.getElementById('dedit-estado').value,
     obs:     document.getElementById('dedit-obs').value.trim(),
   };
@@ -1052,8 +1049,14 @@ function renderDespachos(){
 
   // Sort
   if(_sortCol){
+    const DATE_COLS = ['fdesp','fechaObj'];
     list.sort((a,b)=>{
-      const av = a[_sortCol]||'', bv = b[_sortCol]||'';
+      let av = a[_sortCol]||'', bv = b[_sortCol]||'';
+      if(DATE_COLS.includes(_sortCol)){
+        // Normalizar a aaaa-mm-dd para que la comparación de fechas sea correcta
+        av = _sortCol==='fdesp' ? toInputDate(av) : av;
+        bv = _sortCol==='fdesp' ? toInputDate(bv) : bv;
+      }
       const n = typeof av==='number' ? av-bv : String(av).localeCompare(String(bv));
       return n * _sortDir;
     });
@@ -1181,14 +1184,28 @@ async function uploadDespMasivo(input){
       function parseFechaExcel(val){
         if(!val) return '';
         const s = String(val).trim();
-        if(/^\d{4,5}$/.test(s)){
+        // Caso 1: número serial de Excel
+        if(/^\d{4,6}$/.test(s)){
           const date = new Date(Math.round((parseFloat(s)-25569)*86400*1000));
           const dd = String(date.getUTCDate()).padStart(2,'0');
           const mm = String(date.getUTCMonth()+1).padStart(2,'0');
           const yyyy = date.getUTCFullYear();
           return `${dd}-${mm}-${yyyy}`;
         }
-        return s;
+        // Caso 2: texto con separador - o / → normalizar siempre a dd-mm-aaaa
+        const parts = s.split(/[-\/]/).map(p=>p.trim());
+        if(parts.length===3){
+          const yIdx = parts.findIndex(p=>p.length===4 && /^\d{4}$/.test(p));
+          if(yIdx===0 && /^\d{1,2}$/.test(parts[1]) && /^\d{1,2}$/.test(parts[2])){
+            // aaaa-mm-dd → convertir a dd-mm-aaaa
+            return `${parts[2].padStart(2,'0')}-${parts[1].padStart(2,'0')}-${parts[0]}`;
+          }
+          if(yIdx===2 && /^\d{1,2}$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1])){
+            // ya es dd-mm-aaaa
+            return `${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}-${parts[2]}`;
+          }
+        }
+        return s; // formato no reconocido, se deja tal cual
       }
 
       const nuevos = rows.map(row=>{
