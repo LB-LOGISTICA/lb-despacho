@@ -169,7 +169,36 @@ input[type="file"]{display:none;}
       <input type="file" id="desp-bulk-input" accept=".xlsx,.xls,.csv" onchange="uploadDespMasivo(this)">
       <button class="btn btn-excel" onclick="exportDespachosExcel()">📊 Exportar Excel</button>
     </div>
+    <button class="btn" style="background:rgba(250,204,21,.15);color:#facc15;border:1.5px solid rgba(250,204,21,.3);font-size:1.1em;padding:7px 13px;" onclick="abrirDiagnosticoFechas()" title="Diagnóstico de fechas">🔍</button>
     <button class="btn" style="background:rgba(255,255,255,.1);color:white;border:1.5px solid rgba(255,255,255,.2);font-size:1.1em;padding:7px 13px;" onclick="document.getElementById('settings-overlay').classList.add('open')" title="Personalizar apariencia">🎨</button>
+  </div>
+</div>
+
+<!-- ── DIAGNÓSTICO DE FECHAS ── -->
+<div class="modal-overlay" id="modal-diagnostico" style="z-index:700">
+  <div class="modal" style="max-width:900px">
+    <h2>🔍 Diagnóstico de Fechas de Despacho</h2>
+    <p style="font-size:.85em;color:#6a8a80;margin-bottom:14px">
+      Esta tabla muestra el valor CRUDO guardado en <code>fdesp</code> para cada despacho y el mes que el sistema calcula a partir de él.
+      Sirve para encontrar registros con fecha mal ingresada o en formato distinto.
+    </p>
+    <div style="max-height:60vh;overflow-y:auto;border:1px solid #e0e8e4;border-radius:10px">
+      <table style="width:100%;border-collapse:collapse;font-size:.82em">
+        <thead style="position:sticky;top:0">
+          <tr style="background:#1a4d4d;color:#a8e6c8">
+            <th style="padding:8px 10px;text-align:left">Cliente</th>
+            <th style="padding:8px 10px;text-align:left">OC</th>
+            <th style="padding:8px 10px;text-align:left">fdesp (crudo)</th>
+            <th style="padding:8px 10px;text-align:left">Mes calculado</th>
+            <th style="padding:8px 10px;text-align:left">fechaObj (creación)</th>
+          </tr>
+        </thead>
+        <tbody id="diagnostico-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-diagnostico').classList.remove('open')">Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -785,6 +814,31 @@ function despMes(d){
   return null;
 }
 
+// ══════════════════════════════════════════════
+//  DIAGNÓSTICO DE FECHAS — herramienta de depuración
+// ══════════════════════════════════════════════
+function abrirDiagnosticoFechas(){
+  const tbody = document.getElementById('diagnostico-tbody');
+  if(!tbody) return;
+  const sorted = [...despachos].sort((a,b)=>{
+    const ma = despMes(a)||'0000-00', mb = despMes(b)||'0000-00';
+    return ma.localeCompare(mb);
+  });
+  tbody.innerHTML = sorted.map(d=>{
+    const mes = despMes(d);
+    const esDic2025 = mes==='2025-12';
+    const rowStyle = esDic2025 ? 'background:#fee2e2;color:#991b1b;font-weight:700' : '';
+    return `<tr style="border-bottom:1px solid #eef4f2;${rowStyle}">
+      <td style="padding:7px 10px">${d.cliente||'—'}</td>
+      <td style="padding:7px 10px;font-family:monospace">${d.oc||'—'}</td>
+      <td style="padding:7px 10px;font-family:monospace;font-weight:700">${d.fdesp || '<span style="color:#999">(vacío)</span>'}</td>
+      <td style="padding:7px 10px;font-family:monospace">${mes || '<span style="color:#999">null</span>'}</td>
+      <td style="padding:7px 10px;font-family:monospace;color:#888;font-size:.9em">${d.fechaObj ? d.fechaObj.substring(0,10) : '—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('modal-diagnostico').classList.add('open');
+}
+
 // Formatea cualquier fecha guardada (dd-mm-aaaa o aaaa-mm-dd) a dd-mm-aaaa para MOSTRAR en pantalla
 function formatFecha(val){
   if(!val) return '';
@@ -1287,7 +1341,7 @@ async function uploadDespMasivo(input){
 // ══════════════════════════════════════════════
 //  CERRAR MODALES AL CLICK AFUERA
 // ══════════════════════════════════════════════
-['modal-despacho','modal-despacho-edit'].forEach(id=>{
+['modal-despacho','modal-despacho-edit','modal-diagnostico'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', e=>{ if(e.target===el) el.classList.remove('open'); });
 });
