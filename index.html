@@ -762,26 +762,27 @@ input[type="file"]{display:none;}
 // ══════════════════════════════════════════════
 //  HELPER FECHAS — agrupar por mes según fecha de DESPACHO
 // ══════════════════════════════════════════════
-// Devuelve "aaaa-mm" a partir de la FECHA DE DESPACHO (fdesp).
+// Devuelve "aaaa-mm" a partir de la FECHA DE DESPACHO (fdesp) ÚNICAMENTE.
 // Soporta AMBOS formatos que existen en los datos:
 //   - "dd-mm-aaaa" (viene de carga masiva / Excel)
 //   - "aaaa-mm-dd" (viene del <input type="date"> del formulario)
-// Si no hay fecha de despacho, usa fechaObj (fecha de ingreso) como respaldo.
+// Si el despacho no tiene fecha de despacho asignada, devuelve null y por lo
+// tanto NO se cuenta en los gráficos "por mes" (no se usa la fecha de ingreso
+// como respaldo, porque mezclaría datos de meses distintos a los reales).
 function despMes(d){
-  if(d.fdesp){
-    const parts = d.fdesp.trim().split('-').map(p=>p.trim());
-    if(parts.length===3){
-      const yIdx = parts.findIndex(p => p.length===4 && /^\d{4}$/.test(p));
-      if(yIdx === 0 && /^\d{1,2}$/.test(parts[1])){
-        // aaaa-mm-dd
-        return `${parts[0]}-${parts[1].padStart(2,'0')}`;
-      } else if(yIdx === 2 && /^\d{1,2}$/.test(parts[1])){
-        // dd-mm-aaaa
-        return `${parts[2]}-${parts[1].padStart(2,'0')}`;
-      }
+  if(!d.fdesp) return null;
+  const parts = d.fdesp.trim().split('-').map(p=>p.trim());
+  if(parts.length===3){
+    const yIdx = parts.findIndex(p => p.length===4 && /^\d{4}$/.test(p));
+    if(yIdx === 0 && /^\d{1,2}$/.test(parts[1])){
+      // aaaa-mm-dd
+      return `${parts[0]}-${parts[1].padStart(2,'0')}`;
+    } else if(yIdx === 2 && /^\d{1,2}$/.test(parts[1])){
+      // dd-mm-aaaa
+      return `${parts[2]}-${parts[1].padStart(2,'0')}`;
     }
   }
-  return d.fechaObj ? d.fechaObj.substring(0,7) : null;
+  return null;
 }
 
 // Formatea cualquier fecha guardada (dd-mm-aaaa o aaaa-mm-dd) a dd-mm-aaaa para MOSTRAR en pantalla
