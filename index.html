@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>LB-DESPACHO | Sistema de Despachos</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -182,6 +185,7 @@ input[type="file"]{display:none;}
       Esta tabla muestra el valor CRUDO guardado en <code>fdesp</code> para cada despacho y el mes que el sistema calcula a partir de él.
       Sirve para encontrar registros con fecha mal ingresada o en formato distinto.
     </p>
+    <div id="diagnostico-resumen" style="background:#f0faf6;border-radius:10px;padding:12px;margin-bottom:14px;font-size:.85em"></div>
     <div style="max-height:60vh;overflow-y:auto;border:1px solid #e0e8e4;border-radius:10px">
       <table style="width:100%;border-collapse:collapse;font-size:.82em">
         <thead style="position:sticky;top:0">
@@ -406,6 +410,8 @@ input[type="file"]{display:none;}
 
 <!-- ══ DASHBOARD VIEW ══ -->
 <div class="view-panel" id="panel-dashboard">
+
+  <div style="text-align:right;font-size:.7em;color:rgba(255,255,255,.3);font-family:monospace">build: v2026-06-25-fix-fdesp-only · si no ves este texto exacto, tu navegador está mostrando una versión vieja</div>
 
   <!-- FILTROS DASHBOARD -->
   <div class="filters-bar no-print" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);">
@@ -820,6 +826,23 @@ function despMes(d){
 function abrirDiagnosticoFechas(){
   const tbody = document.getElementById('diagnostico-tbody');
   if(!tbody) return;
+
+  // ── Resumen agregado: EXACTAMENTE lo mismo que calcula el gráfico ──
+  const dataActual = (typeof getDashFiltered === 'function') ? getDashFiltered() : despachos;
+  const resumenWrap = document.getElementById('diagnostico-resumen');
+  if(resumenWrap){
+    const porMes = {};
+    dataActual.forEach(d=>{
+      const m = despMes(d);
+      if(m) porMes[m] = (porMes[m]||0) + (d.pallets||0);
+    });
+    const filas = Object.entries(porMes).sort((a,b)=>a[0].localeCompare(b[0]));
+    resumenWrap.innerHTML = filas.length
+      ? `<div style="font-weight:700;margin-bottom:6px;color:#1a4d4d">📊 Resumen real (mismo cálculo que el gráfico) — total registros usados: ${dataActual.length}</div>` +
+        filas.map(([m,p])=>`<span style="display:inline-block;margin:2px 8px 2px 0;padding:3px 10px;border-radius:6px;background:${m==='2025-12'?'#fee2e2':'#f0faf6'};font-family:monospace;font-size:.85em">${m}: <strong>${p}</strong> pallets</span>`).join('')
+      : '<div style="color:#991b1b">⚠️ No hay ningún registro con fecha de despacho calculable.</div>';
+  }
+
   const sorted = [...despachos].sort((a,b)=>{
     const ma = despMes(a)||'0000-00', mb = despMes(b)||'0000-00';
     return ma.localeCompare(mb);
