@@ -411,7 +411,7 @@ input[type="file"]{display:none;}
 <!-- ══ DASHBOARD VIEW ══ -->
 <div class="view-panel" id="panel-dashboard">
 
-  <div style="text-align:right;font-size:.7em;color:rgba(255,255,255,.3);font-family:monospace">build: v2026-06-25-fix-fdesp-only · si no ves este texto exacto, tu navegador está mostrando una versión vieja</div>
+  <div style="text-align:right;font-size:.7em;color:rgba(255,255,255,.3);font-family:monospace">build: v2026-06-26-fix-timezone-month-labels</div>
 
   <!-- FILTROS DASHBOARD -->
   <div class="filters-bar no-print" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);">
@@ -1545,9 +1545,19 @@ function getMeses(data){
   const allM = [...new Set(data.map(d=>despMes(d)).filter(Boolean))].sort();
   // Si no hay datos en absoluto, mostrar al menos el mes actual para no dejar el gráfico vacío
   const combined = allM.length ? allM : [new Date().toISOString().substring(0,7)];
+  const NOMBRES_MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   return {
     keys: combined,
-    labels: combined.map(k=>{ const d=new Date(k+'-01'); return d.toLocaleDateString('es-CL',{month:'short',year:'2-digit'}); })
+    // Construimos el label directamente desde el string "aaaa-mm" SIN pasar por
+    // new Date(), porque new Date('2026-01-01') se interpreta en UTC y al
+    // convertir a hora local (Chile, UTC-3/-4) retrocede al mes anterior
+    // (ej: "2026-01" mostraba "dic 25"). Aquí evitamos ese desfase de zona horaria.
+    labels: combined.map(k=>{
+      const [yyyy, mm] = k.split('-');
+      const mesIdx = parseInt(mm,10) - 1;
+      const yy2 = yyyy.slice(-2);
+      return `${NOMBRES_MES[mesIdx]} ${yy2}`;
+    })
   };
 }
 
@@ -1620,9 +1630,6 @@ function renderChartPalletsMes(data){
   destroyChart('pallets-mes');
   const {keys,labels} = getMeses(data);
   const vals = keys.map(m=>data.filter(d=>despMes(d)===m).reduce((s,d)=>s+(d.pallets||0),0));
-  console.log('🔍 DEBUG renderChartPalletsMes — keys:', keys, 'labels:', labels, 'vals:', vals);
-  console.log('🔍 DEBUG total despachos en data:', data.length);
-  console.log('🔍 DEBUG ejemplo de fdesp de los primeros 5:', data.slice(0,5).map(d=>({cliente:d.cliente, fdesp:d.fdesp, despMesCalc:despMes(d)})));
   _charts['pallets-mes'] = new Chart(ctx,{
     type:'bar', plugins:[DATALABELS_PLUGIN],
     data:{labels,datasets:[{label:'Pallets',data:vals,backgroundColor:'rgba(46,158,122,.75)',borderColor:'#2e9e7a',borderWidth:2,borderRadius:6}]},
