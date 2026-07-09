@@ -440,7 +440,7 @@ input[type="file"]{display:none;}
 
   <!-- KPI TOP -->
   <div class="kpi-grid">
-    <div class="d-card"><h3>Pallets del Mes</h3><p id="dash-kpi-pallets">0</p></div>
+    <div class="d-card"><h3 id="dash-kpi-pallets-label">Total Pallets</h3><p id="dash-kpi-pallets">0</p></div>
     <div class="d-card"><h3>OC Únicas</h3><p id="dash-kpi-oc">0</p></div>
     <div class="d-card"><h3>Guías Emitidas</h3><p id="dash-kpi-guias">0</p></div>
     <div class="d-card"><h3>Volumen Total m³</h3><p id="dash-kpi-vol">0</p></div>
@@ -1630,8 +1630,9 @@ function renderDashboard(){
 }
 
 function updateDashKpi(data){
-  const mes   = new Date().toISOString().substring(0,7);
-  const pMes  = data.filter(d=>despMes(d)===mes).reduce((s,d)=>s+(d.pallets||0),0);
+  // Pallets: total del período filtrado (si hay filtro de mes, muestra ese mes; si no, el total)
+  const mesFilter = (document.getElementById('dash-f-mes')||{value:''}).value;
+  const pTotal = data.reduce((s,d)=>s+(d.pallets||0),0);
   const ocU   = new Set(data.map(d=>d.oc).filter(Boolean)).size;
   const guias = data.filter(d=>d.guia).length;
   const vol   = data.reduce((s,d)=>s+(d.vol||0),0);
@@ -1639,7 +1640,20 @@ function updateDashKpi(data){
   const pend  = data.filter(d=>d.estado!=='DESPACHOS OK').length;
   const cumpl = data.length ? Math.round((ok/data.length)*100) : 0;
   const s = id=>document.getElementById(id);
-  if(s('dash-kpi-pallets')) s('dash-kpi-pallets').textContent = pMes;
+
+  // Título dinámico del KPI según filtro activo
+  const labelEl = s('dash-kpi-pallets-label');
+  if(labelEl){
+    if(mesFilter){
+      const NOMBRES_MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      const [yyyy,mm] = mesFilter.split('-');
+      labelEl.textContent = `Pallets ${NOMBRES_MES[parseInt(mm,10)-1]} ${yyyy.slice(-2)}`;
+    } else {
+      labelEl.textContent = 'Total Pallets';
+    }
+  }
+
+  if(s('dash-kpi-pallets')) s('dash-kpi-pallets').textContent = pTotal;
   if(s('dash-kpi-oc'))      s('dash-kpi-oc').textContent      = ocU;
   if(s('dash-kpi-guias'))   s('dash-kpi-guias').textContent   = guias;
   if(s('dash-kpi-vol'))     s('dash-kpi-vol').textContent     = vol.toFixed(1);
