@@ -552,22 +552,39 @@ input[type="file"]{display:none;}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
               <label style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;display:block;margin-bottom:5px">Ancho (mm)</label>
-              <input id="pallet-custom-w" type="number" min="1" placeholder="ej: 1100" value="950"
+              <input id="pallet-custom-w" type="number" min="1" placeholder="ej: 1250" value="950"
                 oninput="updatePalletCustom()"
                 style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-size:.9em;outline:none">
             </div>
             <div>
               <label style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;display:block;margin-bottom:5px">Largo (mm)</label>
-              <input id="pallet-custom-l" type="number" min="1" placeholder="ej: 1100" value="950"
+              <input id="pallet-custom-l" type="number" min="1" placeholder="ej: 1250" value="950"
                 oninput="updatePalletCustom()"
                 style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-size:.9em;outline:none">
             </div>
           </div>
-          <div style="margin-top:10px">
-            <label style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;display:block;margin-bottom:5px">Alto base del pallet (cm)</label>
-            <input id="pallet-custom-h" type="number" min="1" placeholder="ej: 14" value="14"
-              oninput="updatePalletCustom()"
-              style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-size:.9em;outline:none">
+          <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px">
+            <div style="color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:8px">Altura total del pallet</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
+              <div>
+                <label style="color:rgba(255,255,255,.5);font-size:.7em;display:block;margin-bottom:4px">Base (cm)</label>
+                <input id="pallet-custom-h" type="number" min="1" placeholder="14" value="14"
+                  oninput="updatePalletCustom(); recalcAltTotal()"
+                  style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 8px;color:white;font-size:.9em;outline:none">
+              </div>
+              <div>
+                <label style="color:rgba(255,255,255,.5);font-size:.7em;display:block;margin-bottom:4px">Altura máx. total (cm)</label>
+                <input id="pallet-custom-alt-total" type="number" min="1" placeholder="120" value="120"
+                  oninput="recalcAltTotal()"
+                  style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 8px;color:white;font-size:.9em;outline:none">
+              </div>
+              <div>
+                <label style="color:rgba(255,255,255,.5);font-size:.7em;display:block;margin-bottom:4px">Altura útil paneles (cm)</label>
+                <input id="pallet-custom-alt-util" type="number" readonly
+                  style="width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 8px;color:#a8e6c8;font-size:.9em;font-weight:700;outline:none">
+              </div>
+            </div>
+            <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:6px">Altura útil = Altura total máx. − Base</div>
           </div>
         </div>
       </div>
@@ -644,35 +661,40 @@ input[type="file"]{display:none;}
         <div id="orient-recomend" style="margin-top:14px;font-size:.88em;color:#a8e6c8;font-weight:600;background:rgba(46,158,122,.15);border-radius:8px;padding:8px 12px"></div>
       </div>
 
-      <!-- VISTA 3D ISOMÉTRICA — única, con flecha de medida -->
-      <div class="chart-card" id="cubo-3d" style="display:none">
-        <div class="chart-card-title">🎲 Vista 3D — Pallet completo</div>
-        <div style="display:flex;justify-content:center">
-          <canvas id="canvas-3d-a" width="360" height="380" style="border-radius:8px"></canvas>
+      <!-- 3D + TOP VIEW LADO A LADO -->
+      <div id="cubo-vistas-row" style="display:none;grid-template-columns:1fr 1fr;gap:14px">
+
+        <!-- VISTA 3D -->
+        <div class="chart-card" id="cubo-3d">
+          <div class="chart-card-title">🎲 Vista 3D — Pallet completo</div>
+          <div style="display:flex;justify-content:center">
+            <canvas id="canvas-3d-a" width="280" height="320" style="border-radius:8px"></canvas>
+          </div>
+        </div>
+
+        <!-- VISTA TOP-DOWN -->
+        <div class="chart-card" id="cubo-visual">
+          <div class="chart-card-title">🔭 Vista superior — por capa</div>
+          <div style="text-align:center">
+            <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Distribución <span id="label-a" style="color:#a8e6c8"></span></div>
+            <canvas id="canvas-vista-a" width="260" height="260" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
+            <div id="txt-a" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
+          </div>
         </div>
       </div>
 
-      <!-- VISTA TOP-DOWN -->
-      <div class="chart-card" id="cubo-visual" style="display:none">
-        <div class="chart-card-title">🔭 Vista superior — distribución por capa</div>
-        <div style="text-align:center">
-          <div style="color:rgba(255,255,255,.6);font-size:.78em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Distribución <span id="label-a" style="color:#a8e6c8"></span></div>
-          <canvas id="canvas-vista-a" width="300" height="300" style="border-radius:10px;background:rgba(255,255,255,.04);max-width:100%"></canvas>
-          <div id="txt-a" style="color:rgba(255,255,255,.55);font-size:.8em;margin-top:6px"></div>
-        </div>
-      </div>
-
-      <!-- TABLA RESUMEN POR PALLET -->
+      <!-- TABLA RESUMEN POR PALLET — ancho completo -->
       <div class="chart-card" id="cubo-tabla" style="display:none">
         <div class="chart-card-title">📋 Resumen por pallet</div>
-        <table style="width:100%;border-collapse:collapse;font-size:.9em">
+        <table style="width:100%;border-collapse:collapse;font-size:.92em">
           <thead>
             <tr style="border-bottom:1px solid rgba(255,255,255,.15)">
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:left">Pallet N°</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Unidades</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Capas</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Altura total (cm)</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 14px;text-align:right">Ocupación</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:left">Pallet N°</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Unidades</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Capas</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Altura total (cm)</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Uds/capa</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Ocupación</th>
             </tr>
           </thead>
           <tbody id="cubo-tabla-body"></tbody>
@@ -1812,6 +1834,15 @@ function selectPallet(key){
   }
 }
 
+function recalcAltTotal(){
+  const base     = parseFloat(document.getElementById('pallet-custom-h')?.value)||14;
+  const altTotal = parseFloat(document.getElementById('pallet-custom-alt-total')?.value)||120;
+  const util     = Math.max(0, altTotal - base);
+  const elUtil   = document.getElementById('pallet-custom-alt-util');
+  if(elUtil) elUtil.value = util.toFixed(1);
+  calcCubicacion();
+}
+
 function updatePalletCustom(){
   const w = parseFloat(document.getElementById('pallet-custom-w').value) || 950;
   const l = parseFloat(document.getElementById('pallet-custom-l').value) || 950;
@@ -1821,7 +1852,7 @@ function updatePalletCustom(){
   PALLETS['custom'].label = `${w}×${l} mm (personalizado)`;
   PALLET_BASE_H = h;
   cuboState.pallet = 'custom';
-  calcCubicacion();
+  recalcAltTotal();
 }
 
 function selectProd(key){
@@ -1902,13 +1933,16 @@ function calcCubicacion(){
 
   if(porCapa === 0){
     document.getElementById('cubo-empty').style.display='block';
-    ['cubo-detalle','cubo-3d','cubo-visual','cubo-tabla'].forEach(id=>document.getElementById(id).style.display='none');
+    ['cubo-detalle','cubo-vistas-row','cubo-tabla'].forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='none';});
     document.getElementById('cubo-empty').innerHTML=`<div style="font-size:2em">⚠️</div><div style="color:#ffaaaa;margin-top:10px">El producto no cabe en este pallet</div>`;
     return;
   }
 
-  // ── Altura máxima TOTAL del pallet = 120cm (incluye base de 14cm) ──
-  const ALTURA_MAX_TOTAL_CM = 120;
+  // ── Altura máxima TOTAL del pallet (incluye base) ──
+  // Para pallet personalizado usa el campo de altura total máxima, si no 120cm por defecto
+  const ALTURA_MAX_TOTAL_CM = cuboState.pallet==='custom'
+    ? (parseFloat(document.getElementById('pallet-custom-alt-total')?.value)||120)
+    : 120;
   const maxAltUtil      = (ALTURA_MAX_TOTAL_CM - PALLET_BASE_H) * 10; // mm útiles para productos
   const capasPorPallet = Math.floor(maxAltUtil / altMM);
   const porPallet      = porCapa * capasPorPallet;
@@ -1962,12 +1996,13 @@ function calcCubicacion(){
     const ocup  = Math.round((unids/porPallet)*100);
     const color = ocup===100?'#a8e6c8':ocup>50?'#fef08a':'#fca5a5';
     tablaHTML += `<tr style="border-bottom:1px solid rgba(255,255,255,.08)">
-      <td style="padding:9px 14px;color:white;font-weight:700;font-size:.9em">Pallet ${i}${esUltimo?' <span style="font-size:.75em;color:#fca5a5">(incompleto)</span>':''}</td>
-      <td style="padding:9px 14px;text-align:right;color:white;font-weight:700;font-size:.95em">${unids}</td>
-      <td style="padding:9px 14px;text-align:right;color:rgba(255,255,255,.8);font-size:.9em">${capas}</td>
-      <td style="padding:9px 14px;text-align:right;color:rgba(255,255,255,.8);font-size:.9em">${alt}</td>
-      <td style="padding:9px 14px;text-align:right">
-        <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:4px 12px;color:${color};font-weight:700;font-size:.88em">${ocup}%</span>
+      <td style="padding:9px 16px;color:white;font-weight:700;font-size:.9em">Pallet ${i}${esUltimo?' <span style="font-size:.75em;color:#fca5a5">(incompleto)</span>':''}</td>
+      <td style="padding:9px 16px;text-align:right;color:white;font-weight:700;font-size:.95em">${unids}</td>
+      <td style="padding:9px 16px;text-align:right;color:rgba(255,255,255,.8);font-size:.9em">${capas}</td>
+      <td style="padding:9px 16px;text-align:right;color:rgba(255,255,255,.8);font-size:.9em">${alt} cm</td>
+      <td style="padding:9px 16px;text-align:right;color:rgba(255,255,255,.7);font-size:.9em">${porCapa}</td>
+      <td style="padding:9px 16px;text-align:right">
+        <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:4px 14px;color:${color};font-weight:700;font-size:.88em">${ocup}%</span>
       </td>
     </tr>`;
   }
@@ -1979,11 +2014,13 @@ function calcCubicacion(){
   s('label-a').textContent = layout.tipo==='patron4'
     ? `— Patrón 4 uds/bloque ✅` : `— ${layout.filas}×${layout.cols} uds/capa ✅`;
   s('txt-a').textContent = `${porCapa} unidades por capa`;
-  s('cubo-visual').style.display = 'block';
 
-  // ── Vista 3D — pallet completo siempre consistente, con flecha de 120cm ──
-  draw3DLayout('canvas-3d-a', pal, pro, layout, capasPorPallet, altMM, altPalletCm);
-  s('cubo-3d').style.display = 'block';
+  // ── Vista 3D — pallet completo siempre consistente, con flecha de medida ──
+  draw3DLayout('canvas-3d-a', pal, pro, layout, capasPorPallet, altMM, altPalletCm, ALTURA_MAX_TOTAL_CM);
+
+  // Mostrar ambas vistas lado a lado
+  const vistasRow = s('cubo-vistas-row');
+  if(vistasRow){ vistasRow.style.display = 'grid'; }
 }
 
 // ── Dibujar 2D según layout ──
@@ -2050,29 +2087,27 @@ function drawPieza(ctx, x, y, w, h, num, color){
 }
 
 // ── Dibujar 3D según layout — escala SIEMPRE consistente respecto a 120cm totales ──
-function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM, altPalletCm){
+function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM, altPalletCm, altMaxCm){
   const canvas = document.getElementById(canvasId); if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const CW = canvas.width, CH = canvas.height;
   ctx.clearRect(0,0,CW,CH);
 
-  const ALTURA_MAX_CM = 120;          // referencia fija siempre
+  const ALTURA_MAX_CM = altMaxCm || 120;
   const ALTURA_MAX_MM = ALTURA_MAX_CM * 10;
-  const baseH = PALLET_BASE_H * 10;   // 140mm
+  const baseH = PALLET_BASE_H * 10;
 
-  // Escala horizontal (planta) y vertical (altura) — la vertical SIEMPRE
-  // se calcula sobre los 120cm máximos, así el dibujo es comparable entre cálculos.
-  const scH = Math.min((CW-20)/pal.w, (CW-20)/pal.l) * 0.46;
-  const scV = (CH-70) / ALTURA_MAX_MM; // mm → px, fijo siempre
+  const scH = Math.min((CW-50)/pal.w, (CW-50)/pal.l) * 0.44;
+  const scV = (CH-70) / ALTURA_MAX_MM;
 
-  const isoX = (x,y)   => CW/2 + (x - y) * scH * 0.866;
+  const isoX = (x,y)   => CW/2 - 18 + (x - y) * scH * 0.866;
   const isoY = (x,y,z) => CH-46 - (x+y) * scH * 0.5 - z * scV;
 
   // Base pallet (madera)
   drawIsoBox(ctx,isoX,isoY, 0,0,-baseH, pal.w,pal.l,baseH,
     'rgba(170,110,45,.95)','rgba(115,68,22,.95)','rgba(140,85,32,.95)');
 
-  // Capas de producto reales
+  // Capas de producto + número de capa en el lado izquierdo de la vista
   for(let capa=0; capa<numCapas; capa++){
     const z = capa * altMM;
     const dark = Math.min(capa * 4, 28);
@@ -2095,44 +2130,65 @@ function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM, altPalletCm){
           `hsla(160,55%,${45-dark}%,.92)`,`hsla(160,55%,${33-dark}%,.92)`,`hsla(160,55%,${39-dark}%,.92)`);
       }
     }
+
+    // ── Número de capa en el borde izquierdo del pallet ──
+    // Lo dibujamos al nivel del tope de esta capa, al lado de la cara frontal izquierda
+    const zTop = z + altMM;
+    const xLabelPx = isoX(0, pal.l, zTop) - 6;
+    const yLabelPx = isoY(0, pal.l, zTop);
+    // Solo mostrar etiqueta si tiene espacio suficiente (evitar amontonamiento)
+    if(capa===0 || capa===numCapas-1 || capa%2===0 || numCapas<=10){
+      ctx.save();
+      ctx.font = `bold ${Math.max(8, Math.min(11, 180/numCapas))}px Segoe UI`;
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`C${capa+1}`, xLabelPx, yLabelPx);
+      // línea guía horizontal desde la etiqueta hasta la cara del pallet
+      ctx.strokeStyle = 'rgba(255,255,255,.2)';
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([2,2]);
+      ctx.beginPath();
+      ctx.moveTo(xLabelPx+2, yLabelPx);
+      ctx.lineTo(isoX(0, pal.l, zTop), yLabelPx);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
   }
 
-  // ── Flecha de medida vertical: desde el piso (base del pallet) hasta 120cm ──
-  const arrowX = CW - 34;
-  const yFloor = isoY(0, pal.l, -baseH);      // nivel del piso (suelo)
-  const yTop   = isoY(0, pal.l, ALTURA_MAX_MM - baseH); // tope a 120cm desde el piso
-  ctx.strokeStyle = 'rgba(255,255,255,.55)';
-  ctx.fillStyle   = 'rgba(255,255,255,.55)';
+  // ── Flecha de medida vertical: desde el piso hasta la altura máxima ──
+  const arrowX = CW - 22;
+  const yFloor = isoY(0, pal.l, -baseH);
+  const yTop   = isoY(0, pal.l, ALTURA_MAX_MM - baseH);
+  ctx.strokeStyle = 'rgba(255,255,255,.5)';
+  ctx.fillStyle   = 'rgba(255,255,255,.5)';
   ctx.lineWidth = 1.5;
-  // línea vertical
   ctx.beginPath(); ctx.moveTo(arrowX, yFloor); ctx.lineTo(arrowX, yTop); ctx.stroke();
-  // flechas en ambos extremos
   drawArrowHead(ctx, arrowX, yFloor, 'down');
   drawArrowHead(ctx, arrowX, yTop, 'up');
-  // ticks horizontales en los extremos
-  ctx.beginPath(); ctx.moveTo(arrowX-5,yFloor); ctx.lineTo(arrowX+5,yFloor); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(arrowX-5,yTop); ctx.lineTo(arrowX+5,yTop); ctx.stroke();
-  // etiqueta de medida
+  ctx.beginPath(); ctx.moveTo(arrowX-4,yFloor); ctx.lineTo(arrowX+4,yFloor); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(arrowX-4,yTop); ctx.lineTo(arrowX+4,yTop); ctx.stroke();
   ctx.save();
-  ctx.translate(arrowX+14, (yFloor+yTop)/2);
+  ctx.translate(arrowX+12, (yFloor+yTop)/2);
   ctx.rotate(-Math.PI/2);
-  ctx.font = 'bold 11px Segoe UI';
-  ctx.textAlign = 'center'; ctx.textBaseline='middle';
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.fillText('120 cm máx.', 0, 0);
+  ctx.font = 'bold 10px Segoe UI';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,.8)';
+  ctx.fillText(`${ALTURA_MAX_CM} cm máx.`, 0, 0);
   ctx.restore();
   // marca de altura real ocupada
   const yRealTop = isoY(0, pal.l, numCapas*altMM - baseH);
   ctx.setLineDash([3,3]);
-  ctx.strokeStyle = 'rgba(168,230,200,.7)';
+  ctx.strokeStyle = 'rgba(168,230,200,.8)';
   ctx.beginPath(); ctx.moveTo(arrowX-5, yRealTop); ctx.lineTo(arrowX+5, yRealTop); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(168,230,200,.9)';
-  ctx.font = 'bold 10px Segoe UI'; ctx.textAlign='left';
+  ctx.fillStyle = 'rgba(168,230,200,.95)';
+  ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'left';
   ctx.fillText(`${altPalletCm} cm`, arrowX+8, yRealTop+3);
 
-  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
-  ctx.fillText(`${numCapas} capas · altura producto ${altMM}mm`, CW/2-10, CH-8);
+  ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(`${numCapas} capas · ${altMM}mm c/u`, CW/2-18, CH-6);
 }
 
 function drawArrowHead(ctx, x, y, dir){
