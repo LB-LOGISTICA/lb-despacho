@@ -505,6 +505,48 @@ input[type="file"]{display:none;}
     </div>
   </div>
 
+  <!-- TABLA TASA DE ARMADO DE PALLETS POR MES -->
+  <div>
+    <div class="chart-card-title" style="color:rgba(255,255,255,.85);font-size:.9em;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+      📈 Tasa de Armado de Pallets por Mes
+    </div>
+    <div class="dash-clientes-card">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+        <colgroup>
+          <col style="width:10%">
+          <col style="width:9%">
+          <col style="width:9%">
+          <col style="width:9%">
+          <col style="width:8%">
+          <col style="width:9%">
+          <col style="width:9%">
+          <col style="width:8%">
+          <col style="width:9%">
+          <col style="width:10%">
+          <col style="width:10%">
+        </colgroup>
+        <thead style="background:#1a4d4d">
+          <tr>
+            <th style="padding:12px 14px;text-align:left;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Mes</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Pallets</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">OC</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Despachos</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Pall/Desp</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Vol. m³</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">m³/Pallet</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Var. %</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">% Acum.</th>
+            <th style="padding:12px 14px;text-align:right;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Cumpl.%</th>
+            <th style="padding:12px 14px;text-align:center;font-size:.8em;color:#a8e6c8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Tendencia</th>
+          </tr>
+        </thead>
+        <tbody id="dash-tasa-tbody"></tbody>
+        <tfoot id="dash-tasa-tfoot"></tfoot>
+      </table>
+      <div id="dash-tasa-empty" style="text-align:center;padding:36px;color:var(--text-muted);font-size:.9em">Sin datos aún</div>
+    </div>
+  </div>
+
 </div><!-- /panel-dashboard -->
 
 <!-- ══ CUBICACIÓN VIEW ══ -->
@@ -1627,6 +1669,7 @@ function renderDashboard(){
   renderChartEstados(data);
   renderChartPareto(data);
   renderTablaClientes(data);
+  renderTasaArmado(data);
 }
 
 function updateDashKpi(data){
@@ -1790,6 +1833,125 @@ function renderTablaClientes(data){
       <td style="padding:16px 20px;text-align:center">${badge}</td>
     </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  TABLA TASA DE ARMADO DE PALLETS POR MES
+// ══════════════════════════════════════════════
+function renderTasaArmado(data){
+  const tbody  = document.getElementById('dash-tasa-tbody');
+  const tfoot  = document.getElementById('dash-tasa-tfoot');
+  const empty  = document.getElementById('dash-tasa-empty');
+  if(!tbody) return;
+
+  // Agrupar por mes usando despMes (fecha de despacho)
+  const mesMap = {};
+  data.forEach(d=>{
+    const m = despMes(d);
+    if(!m) return;
+    if(!mesMap[m]) mesMap[m]={ pallets:0, ocs:new Set(), despachos:0, vol:0, ok:0, total:0 };
+    mesMap[m].pallets    += d.pallets||0;
+    if(d.oc) mesMap[m].ocs.add(d.oc);
+    mesMap[m].despachos  += 1;
+    mesMap[m].vol        += d.vol||0;
+    if(d.estado==='DESPACHOS OK') mesMap[m].ok++;
+    mesMap[m].total++;
+  });
+
+  const meses = Object.keys(mesMap).sort();
+  if(!meses.length){ tbody.innerHTML=''; if(tfoot) tfoot.innerHTML=''; if(empty) empty.style.display='block'; return; }
+  if(empty) empty.style.display='none';
+
+  const NOMBRES_MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const totalPallets = meses.reduce((s,m)=>s+mesMap[m].pallets,0)||1;
+  let acumPallets = 0;
+  let prevPallets = null;
+
+  // Promedio mensual para referencia
+  const promMensual = Math.round(totalPallets / meses.length);
+
+  tbody.innerHTML = meses.map((m, i)=>{
+    const v = mesMap[m];
+    const [yyyy,mm] = m.split('-');
+    const mesLabel = `${NOMBRES_MES[parseInt(mm,10)-1]} ${yyyy.slice(-2)}`;
+    acumPallets += v.pallets;
+    const pctAcum   = ((acumPallets/totalPallets)*100).toFixed(1);
+    const pallDesp  = v.despachos ? (v.pallets/v.despachos).toFixed(1) : '—';
+    const m3Pallet  = v.pallets   ? (v.vol/v.pallets).toFixed(3) : '—';
+    const cumplPct  = v.total     ? Math.round((v.ok/v.total)*100) : 0;
+
+    // Variación vs mes anterior
+    let varHtml = '<span style="color:rgba(255,255,255,.3)">—</span>';
+    if(prevPallets !== null && prevPallets > 0){
+      const varPct = ((v.pallets - prevPallets)/prevPallets*100).toFixed(1);
+      const isUp   = parseFloat(varPct) >= 0;
+      varHtml = `<span style="color:${isUp?'#4ade80':'#f87171'};font-weight:700">${isUp?'▲':'▼'} ${Math.abs(varPct)}%</span>`;
+    }
+    prevPallets = v.pallets;
+
+    // Tendencia visual: barra proporcional al máximo del período
+    const maxP = Math.max(...meses.map(x=>mesMap[x].pallets));
+    const barW = maxP ? Math.round((v.pallets/maxP)*100) : 0;
+    const barColor = barW>=80?'#2e9e7a':barW>=50?'#facc15':'#f87171';
+    const tendencia = `<div style="display:flex;align-items:center;gap:6px">
+      <div style="flex:1;background:rgba(255,255,255,.1);border-radius:3px;height:8px">
+        <div style="width:${barW}%;background:${barColor};height:8px;border-radius:3px"></div>
+      </div>
+      <span style="font-size:.75em;color:rgba(255,255,255,.5);min-width:28px;text-align:right">${barW}%</span>
+    </div>`;
+
+    // Comparación vs promedio mensual
+    const vsPromedio = v.pallets >= promMensual
+      ? `<span style="color:#4ade80;font-size:.75em">▲ sobre prom.</span>`
+      : `<span style="color:#f87171;font-size:.75em">▼ bajo prom.</span>`;
+
+    const cumplBadge = cumplPct===100
+      ? `<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:12px;font-size:.8em;font-weight:700">${cumplPct}%</span>`
+      : cumplPct>=80
+      ? `<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:12px;font-size:.8em;font-weight:700">${cumplPct}%</span>`
+      : `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:.8em;font-weight:700">${cumplPct}%</span>`;
+
+    const rowBg = i%2===0 ? '' : 'background:#f9fcfb';
+    return `<tr style="${rowBg};border-bottom:1px solid #eef4f2" onmouseover="this.style.background='#f0faf6'" onmouseout="this.style.background='${i%2===0?'white':'#f9fcfb'}'">
+      <td style="padding:11px 14px;font-weight:700;color:#1a4d4d;font-size:.92em">${mesLabel}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-weight:700;font-size:1em;color:#1a4d4d">${v.pallets}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-size:.9em">${v.ocs.size}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-size:.9em">${v.despachos}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-size:.9em">${pallDesp}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-size:.9em">${v.vol.toFixed(2)}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-size:.9em">${m3Pallet}</td>
+      <td style="padding:11px 14px;text-align:right;font-size:.9em">${varHtml}</td>
+      <td style="padding:11px 14px;text-align:right;font-family:monospace;font-weight:700;font-size:.9em;color:#1a6a48">${pctAcum}%</td>
+      <td style="padding:11px 14px;text-align:center">${cumplBadge}</td>
+      <td style="padding:11px 14px">${tendencia}</td>
+    </tr>`;
+  }).join('');
+
+  // TOTALES en tfoot
+  const totPall  = meses.reduce((s,m)=>s+mesMap[m].pallets,0);
+  const totOcs   = new Set(data.map(d=>d.oc).filter(Boolean)).size;
+  const totDesp  = meses.reduce((s,m)=>s+mesMap[m].despachos,0);
+  const totVol   = meses.reduce((s,m)=>s+mesMap[m].vol,0);
+  const totOk    = meses.reduce((s,m)=>s+mesMap[m].ok,0);
+  const totTotal = meses.reduce((s,m)=>s+mesMap[m].total,0);
+  const totCumpl = totTotal ? Math.round((totOk/totTotal)*100) : 0;
+  const avgPall  = meses.length ? Math.round(totPall/meses.length) : 0;
+  const avgM3    = totPall ? (totVol/totPall).toFixed(3) : '—';
+
+  if(tfoot) tfoot.innerHTML = `
+    <tr style="background:#1a4d4d;color:#a8e6c8;font-weight:700;border-top:2px solid rgba(255,255,255,.2)">
+      <td style="padding:12px 14px;font-size:.88em;text-transform:uppercase;letter-spacing:.04em">TOTAL / PROM.</td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace;font-size:1em">${totPall} <span style="font-size:.75em;opacity:.7">(prom. ${avgPall}/mes)</span></td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace">${totOcs}</td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace">${totDesp}</td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace">${totDesp?(totPall/totDesp).toFixed(1):'—'}</td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace">${totVol.toFixed(2)}</td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace">${avgM3}</td>
+      <td style="padding:12px 14px"></td>
+      <td style="padding:12px 14px;text-align:right;font-family:monospace">100%</td>
+      <td style="padding:12px 14px;text-align:center;font-family:monospace">${totCumpl}%</td>
+      <td style="padding:12px 14px"></td>
+    </tr>`;
 }
 
 // ══════════════════════════════════════════════
