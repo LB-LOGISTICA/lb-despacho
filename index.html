@@ -5,7 +5,16 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>LB-DESPACHO | Sistema de Despachos</title>
+<title>Sistema despachos LB</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#123737">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Despachos LB">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ══ RESET & BASE ══ */
@@ -145,37 +154,92 @@ input[type="file"]{display:none;}
 .header-logo img{height:36px;width:auto;border-radius:6px;object-fit:contain;display:none;}
 .header-logo .logo-placeholder{height:36px;padding:0 12px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:8px;display:flex;align-items:center;font-size:.75em;color:rgba(255,255,255,.5);cursor:pointer;white-space:nowrap;transition:background .2s;}
 .header-logo .logo-placeholder:hover{background:rgba(255,255,255,.18);}
+
+/* ══ v2: tema, sidebar, login ══ */
+:root{--bg:#0d2b2b;--side:#123737;--accent:#2e9e7a;--accent2:#1a7a50;--acc-l:#a8e6c8;--thead:#1a4d4d;--card:255,255,255;--shade:.55;--blur:0px;}
+body{flex-direction:row!important;height:100vh;height:100dvh;background:var(--bg)!important;}
+#bg-layer{position:fixed;inset:-20px;z-index:-2;background:var(--bg) center/cover no-repeat;filter:blur(var(--blur));}
+#bg-shade{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:var(--shade);}
+.main-content{background:transparent!important;backdrop-filter:none!important;}
+.sidebar{width:230px;background:var(--side);color:#fff;display:flex;flex-direction:column;gap:6px;padding:max(14px,env(safe-area-inset-top)) 12px 14px;flex-shrink:0;overflow-y:auto;z-index:20;border-right:1px solid rgba(255,255,255,.08);}
+.sb-brand{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0 14px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:6px;text-align:center;cursor:pointer;}
+.sb-brand h1{font-size:1.05em;font-weight:700;}
+.sb-brand h1 span{color:var(--acc-l);}
+.sidebar .nav-tab{width:100%;text-align:left;padding:11px 14px;}
+.sidebar .nav-tab.active{background:var(--accent);border-color:var(--accent);}
+.sb-spacer{flex:1;min-height:12px;}
+.sb-btn{width:100%;justify-content:flex-start;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.14);}
+.sb-btn:hover{background:rgba(255,255,255,.16);}
+.brand-logo{max-height:64px;max-width:100%;object-fit:contain;border-radius:8px;}
+.brand-ph{height:36px;padding:0 12px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:8px;display:flex;align-items:center;font-size:.75em;color:rgba(255,255,255,.6);}
+#menu-btn{display:none;position:fixed;top:max(10px,env(safe-area-inset-top));left:10px;z-index:30;}
+.dth,.dc-thead th,#panel-dashboard thead{background:var(--thead)!important;}
+.btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent))!important;}
+.d-card,.chart-card{background:rgba(var(--card),.13)!important;}
+.d-card p{color:var(--acc-l)!important;}
+.header-right{flex-wrap:wrap;}
+.table-wrap{overflow-x:auto!important;}
+.table-wrap table{min-width:1350px;}
+.settings-panel{width:min(420px,94vw);max-height:90vh;overflow-y:auto;}
+.set-group input[type=color]{width:44px;height:30px;border:none;border-radius:6px;background:none;cursor:pointer;}
+.pre-row{display:flex;gap:8px;flex-wrap:wrap;}
+.pre-row button{width:34px;height:34px;border-radius:9px;border:2px solid rgba(255,255,255,.3);cursor:pointer;}
+#login-screen{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
+body.locked #login-screen{display:flex;}
+body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:none!important;}
+.login-card{background:rgba(var(--card),.14);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:30px 26px;width:min(360px,100%);display:flex;flex-direction:column;gap:12px;text-align:center;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.login-card h1{font-size:1.3em;}
+.login-card h1 span{color:var(--acc-l);}
+.login-card input{padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;font-size:1em;outline:none;font-family:inherit;}
+.login-card input::placeholder{color:rgba(255,255,255,.55);}
+#lg-err{color:#ffaaaa;font-size:.82em;min-height:1.1em;}
+#login-theme{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;width:auto;}
+@media(max-width:860px){
+  .sidebar{position:fixed;inset:0 auto 0 0;transform:translateX(-100%);transition:transform .25s;width:250px;box-shadow:6px 0 24px rgba(0,0,0,.4);}
+  .sidebar.open{transform:none;}
+  #menu-btn{display:flex;}
+  .inner-wrap{padding:max(56px,calc(env(safe-area-inset-top) + 46px)) 12px 16px;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .dash-grid-3,.dash-grid-2,.dash-grid-donut{grid-template-columns:1fr;}
+  .form-grid,.form-grid-3{grid-template-columns:1fr;}
+  #panel-cubicacion div[style*="400px 1fr"]{grid-template-columns:1fr!important;}
+}
 </style>
 </head>
-<body>
+<body class="locked">
+<div id="bg-layer"></div><div id="bg-shade"></div>
 
-<!-- ── HEADER ── -->
-<div class="app-header no-print" id="app-header">
-  <div style="display:flex;align-items:center;gap:12px;">
-    <div class="header-logo" onclick="document.getElementById('logo-input').click()" title="Click para cambiar logo">
-      <img id="header-logo-img" src="" alt="Logo">
-      <div class="logo-placeholder" id="logo-placeholder">📷 Logo</div>
-      <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="changeLogo(this)">
-    </div>
-    <h1>🚚 Sistema de <span>Despachos</span></h1>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px;">
-    <button class="nav-tab active" id="tab-despachos" onclick="switchTab('despachos')">🚚 Despachos</button>
-    <button class="nav-tab" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
-    <button class="nav-tab" id="tab-cubicacion" onclick="switchTab('cubicacion')">📦 Cubicación</button>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <div class="header-right" id="despachos-actions">
-      <button class="btn btn-primary" onclick="openDespachoModal()">＋ Nuevo Despacho</button>
-      <button class="btn btn-upload" onclick="downloadDespPlantilla()">⬇️ Plantilla Excel</button>
-      <button class="btn btn-json-style" onclick="document.getElementById('desp-bulk-input').click()">📂 Carga Masiva</button>
-      <input type="file" id="desp-bulk-input" accept=".xlsx,.xls,.csv" onchange="uploadDespMasivo(this)">
-      <button class="btn btn-excel" onclick="exportDespachosExcel()">📊 Exportar Excel</button>
-    </div>
-    <button class="btn" style="background:rgba(250,204,21,.15);color:#facc15;border:1.5px solid rgba(250,204,21,.3);font-size:1.1em;padding:7px 13px;" onclick="abrirDiagnosticoFechas()" title="Diagnóstico de fechas">🔍</button>
-    <button class="btn" style="background:rgba(255,255,255,.1);color:white;border:1.5px solid rgba(255,255,255,.2);font-size:1.1em;padding:7px 13px;" onclick="document.getElementById('settings-overlay').classList.add('open')" title="Personalizar apariencia">🎨</button>
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <button class="btn sb-btn" id="login-theme" onclick="openSettings()" title="Personalizar fondo y logo">🎨</button>
+  <div class="login-card">
+    <img class="brand-logo" style="display:none;margin:0 auto" alt="Logo">
+    <h1>🚚 Sistema despachos <span>LB</span></h1>
+    <input id="lg-user" placeholder="Usuario" autocomplete="username" autocapitalize="none">
+    <input id="lg-pass" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="lg-err"></div>
+    <button class="btn btn-primary" style="justify-content:center;padding:11px" onclick="doLogin()">Ingresar</button>
   </div>
 </div>
+
+<!-- ── SIDEBAR ── -->
+<button id="menu-btn" class="btn sb-btn no-print" onclick="document.getElementById('sidebar').classList.toggle('open')" style="width:auto">☰</button>
+<aside class="sidebar no-print" id="sidebar">
+  <div class="sb-brand" onclick="document.getElementById('logo-input').click()" title="Click para cambiar logo">
+    <img class="brand-logo" style="display:none" alt="Logo">
+    <div class="brand-ph">📷 Logo</div>
+    <h1>🚚 Sistema despachos <span>LB</span></h1>
+  </div>
+  <button class="nav-tab active" id="tab-despachos" onclick="switchTab('despachos')">🚚 Despachos</button>
+  <button class="nav-tab" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button class="nav-tab" id="tab-cubicacion" onclick="switchTab('cubicacion')">📦 Cubicación</button>
+  <div class="sb-spacer"></div>
+  <button class="btn sb-btn" onclick="abrirDiagnosticoFechas()">🔍 Diagnóstico de fechas</button>
+  <button class="btn sb-btn" onclick="openSettings()">🎨 Personalizar</button>
+  <button class="btn sb-btn" onclick="installApp()">📲 Instalar app</button>
+  <div id="sb-user" style="font-size:.72em;opacity:.6;text-align:center;word-break:break-all"></div>
+  <button class="btn sb-btn" onclick="doLogout()">🚪 Cerrar sesión</button>
+</aside>
 
 <!-- ── DIAGNÓSTICO DE FECHAS ── -->
 <div class="modal-overlay" id="modal-diagnostico" style="z-index:700">
@@ -210,49 +274,43 @@ input[type="file"]{display:none;}
 <div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="settings-panel">
     <h3>🎨 Personalizar apariencia</h3>
-
-    <div class="set-group">
-      <label>Color de fondo</label>
-      <div class="set-row">
-        <div class="color-swatch active" style="background:#0d2b2b" data-bg="#0d2b2b" onclick="setBg(this,'#0d2b2b')"></div>
-        <div class="color-swatch" style="background:#0d1b2b" data-bg="#0d1b2b" onclick="setBg(this,'#0d1b2b')"></div>
-        <div class="color-swatch" style="background:#1a0d2b" data-bg="#1a0d2b" onclick="setBg(this,'#1a0d2b')"></div>
-        <div class="color-swatch" style="background:#2b1a0d" data-bg="#2b1a0d" onclick="setBg(this,'#2b1a0d')"></div>
-        <div class="color-swatch" style="background:#0d0d0d" data-bg="#0d0d0d" onclick="setBg(this,'#0d0d0d')"></div>
-        <div class="color-swatch" style="background:#1a1f2b" data-bg="#1a1f2b" onclick="setBg(this,'#1a1f2b')"></div>
-        <div class="color-swatch" style="background:#2b1a1a" data-bg="#2b1a1a" onclick="setBg(this,'#2b1a1a')"></div>
-        <div class="color-swatch" style="background:#1f2b1a" data-bg="#1f2b1a" onclick="setBg(this,'#1f2b1a')"></div>
-      </div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
-        <span style="font-size:.8em;color:rgba(255,255,255,.5)">Personalizado:</span>
-        <input type="color" id="bg-custom" value="#0d2b2b" style="width:40px;height:32px;border:none;border-radius:6px;cursor:pointer" onchange="setBgCustom(this.value)">
+    <div class="set-group"><label>Temas rápidos</label>
+      <div class="pre-row">
+        <button style="background:#2e9e7a" onclick="preset('verde')" title="Verde"></button>
+        <button style="background:#2563eb" onclick="preset('azul')" title="Azul"></button>
+        <button style="background:#7c3aed" onclick="preset('morado')" title="Morado"></button>
+        <button style="background:#dc2626" onclick="preset('rojo')" title="Rojo"></button>
+        <button style="background:#d97706" onclick="preset('negro')" title="Negro y ámbar"></button>
       </div>
     </div>
-
     <hr class="set-divider">
-
-    <div class="set-group">
-      <label>Color de acento</label>
-      <div class="set-row">
-        <div class="color-swatch active" style="background:#2e9e7a" onclick="setAccent(this,'#2e9e7a')"></div>
-        <div class="color-swatch" style="background:#2563eb" onclick="setAccent(this,'#2563eb')"></div>
-        <div class="color-swatch" style="background:#7c3aed" onclick="setAccent(this,'#7c3aed')"></div>
-        <div class="color-swatch" style="background:#dc2626" onclick="setAccent(this,'#dc2626')"></div>
-        <div class="color-swatch" style="background:#d97706" onclick="setAccent(this,'#d97706')"></div>
-        <div class="color-swatch" style="background:#0891b2" onclick="setAccent(this,'#0891b2')"></div>
-        <div class="color-swatch" style="background:#db2777" onclick="setAccent(this,'#db2777')"></div>
+    <div class="set-group"><label>Colores</label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;color:#fff;font-size:.85em">
+        <span>Fondo</span><input type="color" id="t-bg" oninput="setT('bg',this.value)">
+        <span>Menú lateral</span><input type="color" id="t-side" oninput="setT('side',this.value)">
+        <span>Acento (botones, números)</span><input type="color" id="t-accent" oninput="setT('accent',this.value)">
+        <span>Encabezado de tablas</span><input type="color" id="t-thead" oninput="setT('thead',this.value)">
+        <span>Tarjetas</span><input type="color" id="t-card" oninput="setT('card',this.value)">
       </div>
     </div>
-
     <hr class="set-divider">
-
-    <div class="set-group">
-      <label>Logo de la empresa</label>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="document.getElementById('logo-input').click();document.getElementById('settings-overlay').classList.remove('open')">📷 Subir / cambiar logo</button>
+    <div class="set-group"><label>Imagen de fondo</label>
+      <input type="file" id="bgimg-input" accept="image/*" onchange="setBgImage(this)">
+      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="document.getElementById('bgimg-input').click()">🖼 Subir imagen de fondo</button>
+      <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;margin-top:6px" onclick="clearBgImage()">🗑 Quitar imagen</button>
+      <div style="color:rgba(255,255,255,.65);font-size:.8em;margin-top:12px">Oscurecer fondo</div>
+      <input type="range" id="t-shade" min="0" max="90" style="width:100%" oninput="setT('shade',+this.value)">
+      <div style="color:rgba(255,255,255,.65);font-size:.8em;margin-top:6px">Desenfoque</div>
+      <input type="range" id="t-blur" min="0" max="20" style="width:100%" oninput="setT('blur',+this.value)">
+    </div>
+    <hr class="set-divider">
+    <div class="set-group"><label>Logo de la empresa</label>
+      <input type="file" id="logo-input" accept="image/*" onchange="changeLogo(this)">
+      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="document.getElementById('logo-input').click()">📷 Subir / cambiar logo</button>
       <button class="btn btn-danger btn-sm" id="btn-remove-logo" style="width:100%;justify-content:center;margin-top:6px;display:none" onclick="removeLogo()">🗑 Quitar logo</button>
     </div>
-
-    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px">
+      <button class="btn btn-ghost btn-sm" onclick="resetTheme()">↺ Restablecer</button>
       <button class="btn btn-primary" onclick="document.getElementById('settings-overlay').classList.remove('open')">✓ Cerrar</button>
     </div>
   </div>
@@ -270,6 +328,14 @@ input[type="file"]{display:none;}
     <div>
       <div class="page-title">🚚 <span>Despachos</span></div>
       <div style="font-size:.8em;color:rgba(255,255,255,.65);margin-top:3px">Registro y seguimiento de despachos</div>
+    </div>
+    <div class="header-right" id="despachos-actions">
+      <button class="btn btn-danger" id="btn-del-sel" style="display:none" onclick="askMassDelete()">🗑 Borrar seleccionados (<span id="sel-n">0</span>)</button>
+      <button class="btn btn-primary" onclick="openDespachoModal()">＋ Nuevo Despacho</button>
+      <button class="btn btn-upload" onclick="downloadDespPlantilla()">⬇️ Plantilla Excel</button>
+      <button class="btn btn-json-style" onclick="document.getElementById('desp-bulk-input').click()">📂 Carga Masiva</button>
+      <input type="file" id="desp-bulk-input" accept=".xlsx,.xls,.csv" onchange="uploadDespMasivo(this)">
+      <button class="btn btn-excel" onclick="exportDespachosExcel()">📊 Exportar Excel</button>
     </div>
   </div>
 
@@ -323,6 +389,7 @@ input[type="file"]{display:none;}
   <div class="table-wrap">
     <table>
       <colgroup>
+        <col style="width:3%">
         <col style="width:9%">  <!-- Cliente -->
         <col style="width:8%">  <!-- OF -->
         <col style="width:7%">  <!-- OC -->
@@ -344,6 +411,7 @@ input[type="file"]{display:none;}
       <thead>
         <!-- Fila 1: títulos con sort -->
         <tr>
+          <th class="dth" style="text-align:center"><input type="checkbox" id="chk-all" onchange="toggleAll(this.checked)" title="Seleccionar todos"></th>
           <th class="dth" onclick="sortDesp('cliente')" style="cursor:pointer">Cliente <span id="sort-cliente"></span></th>
           <th class="dth" onclick="sortDesp('of')" style="cursor:pointer">OF <span id="sort-of"></span></th>
           <th class="dth" onclick="sortDesp('oc')" style="cursor:pointer">OC <span id="sort-oc"></span></th>
@@ -366,6 +434,7 @@ input[type="file"]{display:none;}
         </tr>
         <!-- Fila 2: inputs de filtro por columna -->
         <tr id="col-filter-row">
+          <th class="dth"></th>
           <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-cliente" placeholder="🔍" oninput="renderDespachos()"></th>
           <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-of" placeholder="🔍" oninput="renderDespachos()"></th>
           <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-oc" placeholder="🔍" oninput="renderDespachos()"></th>
@@ -827,27 +896,16 @@ input[type="file"]{display:none;}
   </div>
 </div>
 
-<!-- ══ MODAL EDICIÓN RÁPIDA ══ -->
-<div class="modal-overlay" id="modal-despacho-edit">
-  <div class="modal" style="max-width:480px">
-    <h2>✏️ Editar Despacho</h2>
-    <input type="hidden" id="dedit-id">
-    <div class="form-grid">
-      <div class="form-group"><label>N° Guía</label><input id="dedit-guia" placeholder="Ej: 7919"></div>
-      <div class="form-group"><label>Cant. Pallets</label><input id="dedit-pallets" type="number" min="0" placeholder="0"></div>
-      <div class="form-group"><label>Fecha Despacho</label><input id="dedit-fdesp" type="date"></div>
-      <div class="form-group"><label>Estado</label>
-        <select id="dedit-estado">
-          <option value="PENDIENTE">⏳ Pendiente</option>
-          <option value="EN TRANSITO">🚛 En Tránsito</option>
-          <option value="DESPACHOS OK">✅ Despachos OK</option>
-        </select>
-      </div>
-      <div class="form-group full"><label>Observación</label><textarea id="dedit-obs" placeholder="Notas…"></textarea></div>
-    </div>
+<!-- ══ MODAL AUTORIZACIÓN PARA BORRAR ══ -->
+<div class="modal-overlay" id="modal-pw" style="z-index:800">
+  <div class="modal" style="max-width:380px">
+    <h2>🔒 Autorización requerida</h2>
+    <p style="font-size:.88em;color:#6a8a80;margin-bottom:12px">Vas a eliminar <b id="pw-count">0</b> registro(s). Ingresa la contraseña de autorización.</p>
+    <div class="form-group"><input id="pw-input" type="password" inputmode="numeric" placeholder="Contraseña" autocomplete="off" onkeydown="if(event.key==='Enter')confirmDelete()"></div>
+    <div id="pw-err" style="color:#c02020;font-size:.82em;margin-top:6px;min-height:1.1em"></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('modal-despacho-edit').classList.remove('open')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEditDespacho()">💾 Guardar</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-pw').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">🗑 Eliminar</button>
     </div>
   </div>
 </div>
@@ -951,22 +1009,99 @@ function toInputDate(val){
 // ══════════════════════════════════════════════
 const SUPA_URL = 'https://tehkogyaphacowpnmwio.supabase.co';
 const SUPA_KEY = 'sb_publishable_ZN-_RQvvFiMrdIKH3B_0uA_YdPUBJmF';
-const SUPA_H   = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
-
+const LOGIN_DOMAIN = '@lbdespacho.cl';   // si escribes "admin" se usa admin@lbdespacho.cl
+const DEL_HASH = 'ca153fc499ffc25f1118ad5e58ff242584f3b3a285d4d9428615325613633e3e';              // SHA-256 de la contraseña de autorización
+let session = null, _vis = [];
+const selected = new Set();
+try{ session = JSON.parse(localStorage.getItem('lbd_session')||'null'); }catch(e){}
+function saveSession(x){ session=x; try{ x?localStorage.setItem('lbd_session',JSON.stringify(x)):localStorage.removeItem('lbd_session'); }catch(e){} }
+async function authReq(grant, body){
+  const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=${grant}`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPA_KEY},body:JSON.stringify(body)});
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error_description||j.msg||'Usuario o contraseña incorrectos');
+  saveSession({access_token:j.access_token,refresh_token:j.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000,email:j.user?.email||session?.email});
+}
+async function getToken(){
+  if(!session) return null;
+  if(Date.now() > session.expires_at-60000){ try{ await authReq('refresh_token',{refresh_token:session.refresh_token}); }catch(e){ saveSession(null); return null; } }
+  return session.access_token;
+}
+async function supaFetch(path, opt={}){
+  const t = await getToken();
+  if(!t){ showLogin(); throw new Error('Sesión expirada, ingresa de nuevo'); }
+  const r = await fetch(SUPA_URL+path,{...opt,headers:{'Content-Type':'application/json',apikey:SUPA_KEY,Authorization:'Bearer '+t,...(opt.headers||{})}});
+  if(r.status===401){ saveSession(null); showLogin(); throw new Error('Sesión expirada, ingresa de nuevo'); }
+  return r;
+}
 async function supaGetDespachos(){
-  const r = await fetch(`${SUPA_URL}/rest/v1/despachos?select=data&order=created_at`,{headers:SUPA_H});
-  return r.ok ? (await r.json()).map(x=>x.data) : [];
+  const r = await supaFetch('/rest/v1/despachos?select=data&order=created_at');
+  if(!r.ok) throw new Error(await r.text());
+  return (await r.json()).map(x=>x.data);
 }
 async function supaUpsertDespacho(d){
-  const r = await fetch(`${SUPA_URL}/rest/v1/despachos`,{
-    method:'POST',
-    headers:{...SUPA_H,'Prefer':'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify([{id:d.id,data:d}])
-  });
+  const r = await supaFetch('/rest/v1/despachos',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{id:d.id,data:d}])});
   if(!r.ok) throw new Error(await r.text());
 }
-async function supaDeleteDespacho(id){
-  await fetch(`${SUPA_URL}/rest/v1/despachos?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:SUPA_H});
+async function supaDeleteDespachos(ids){
+  let n = 0;
+  for(let i=0;i<ids.length;i+=40){
+    const ch = ids.slice(i,i+40);
+    const r = await supaFetch(`/rest/v1/despachos?id=in.(${ch.map(encodeURIComponent).join(',')})`,{method:'DELETE',headers:{'Prefer':'return=representation'}});
+    if(!r.ok) throw new Error(await r.text());
+    n += (await r.json()).length;
+  }
+  return n;
+}
+
+// ── Login ──
+function showLogin(){ document.body.classList.add('locked'); }
+function startApp(){
+  if(!session){ showLogin(); return; }
+  document.body.classList.remove('locked');
+  document.getElementById('sb-user').textContent = session.email||'';
+  init();
+}
+async function doLogin(){
+  const u = document.getElementById('lg-user').value.trim(), p = document.getElementById('lg-pass').value;
+  const err = document.getElementById('lg-err'); err.textContent = '';
+  if(!u||!p){ err.textContent = 'Ingresa usuario y contraseña'; return; }
+  try{ await authReq('password',{email:u.includes('@')?u:u+LOGIN_DOMAIN,password:p}); document.getElementById('lg-pass').value=''; startApp(); }
+  catch(e){ err.textContent = '⚠️ '+e.message; }
+}
+function doLogout(){ saveSession(null); location.reload(); }
+
+// ── Selección y borrado con contraseña ──
+async function sha(t){ const b = await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+let _delIds = [];
+function toggleSel(id,on){ on?selected.add(id):selected.delete(id); updSel(); }
+function toggleAll(on){ _vis.forEach(id=>on?selected.add(id):selected.delete(id)); renderDespachos(); }
+function updSel(){
+  const n = selected.size;
+  document.getElementById('sel-n').textContent = n;
+  document.getElementById('btn-del-sel').style.display = n ? 'inline-flex' : 'none';
+  const c = document.getElementById('chk-all'); if(c) c.checked = _vis.length>0 && _vis.every(id=>selected.has(id));
+}
+function askMassDelete(){ if(selected.size) askDelete([...selected]); }
+function askDelete(ids){
+  _delIds = ids;
+  document.getElementById('pw-count').textContent = ids.length;
+  document.getElementById('pw-input').value = ''; document.getElementById('pw-err').textContent = '';
+  document.getElementById('modal-pw').classList.add('open');
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+async function confirmDelete(){
+  const err = document.getElementById('pw-err');
+  let h = ''; try{ h = await sha(document.getElementById('pw-input').value); }catch(e){ err.textContent='Abre la app por https para poder borrar'; return; }
+  if(h !== DEL_HASH){ err.textContent = '⚠️ Contraseña incorrecta'; return; }
+  document.getElementById('modal-pw').classList.remove('open');
+  showLoading('Eliminando…');
+  try{
+    const n = await supaDeleteDespachos(_delIds);
+    if(n === _delIds.length){ despachos = despachos.filter(d=>!_delIds.includes(d.id)); toast(`🗑 ${n} despacho(s) eliminado(s)`); }
+    else { despachos = await supaGetDespachos(); toast(`⚠️ Se eliminaron ${n} de ${_delIds.length}. Revisa permisos en Supabase`); }
+    _delIds.forEach(id=>selected.delete(id));
+    hideLoading(); renderDespachos(); updateKpiDespachos();
+  }catch(e){ hideLoading(); toast('⚠️ Error: '+e.message); }
 }
 
 // ══════════════════════════════════════════════
@@ -1063,10 +1198,11 @@ async function saveDespacho(){
   const vol = getVolumenNum(dim);
   const now = new Date();
   const fechaIngreso = now.toLocaleDateString('es-CL');
+  const prev = editingDespId ? despachos.find(d=>d.id===editingDespId) : null;
   const desp = {
     id:           editingDespId || `desp_${Date.now()}`,
-    fechaIngreso,
-    fechaObj:     now.toISOString(),
+    fechaIngreso: prev?.fechaIngreso||fechaIngreso,
+    fechaObj:     prev?.fechaObj||now.toISOString(),
     cliente:      document.getElementById('d-cliente').value.trim(),
     of:           document.getElementById('d-of').value.trim(),
     oc:           document.getElementById('d-oc').value.trim(),
@@ -1076,7 +1212,7 @@ async function saveDespacho(){
     peso:         parseFloat(document.getElementById('d-peso').value)||0,
     dim,
     vol:          parseFloat(vol.toFixed(3)),
-    quarter:      getQuarter(now.toISOString()),
+    quarter:      prev?.quarter||getQuarter(now.toISOString()),
     fdesp:        formatFecha(document.getElementById('d-fdesp').value),
     estado:       document.getElementById('d-estado').value,
     pallets:      parseFloat(document.getElementById('d-pallets').value)||0,
@@ -1103,56 +1239,9 @@ async function saveDespacho(){
 // ══════════════════════════════════════════════
 //  MODAL EDICIÓN RÁPIDA
 // ══════════════════════════════════════════════
-function openEditDespacho(id){
-  const d = despachos.find(x=>x.id===id);
-  if(!d) return;
-  document.getElementById('dedit-id').value = id;
-  document.getElementById('dedit-guia').value = d.guia||'';
-  document.getElementById('dedit-pallets').value = d.pallets||'';
-  document.getElementById('dedit-fdesp').value = toInputDate(d.fdesp);
-  document.getElementById('dedit-estado').value = d.estado||'PENDIENTE';
-  document.getElementById('dedit-obs').value = d.obs||'';
-  document.getElementById('modal-despacho-edit').classList.add('open');
-}
-
-async function saveEditDespacho(){
-  const id = document.getElementById('dedit-id').value;
-  const idx = despachos.findIndex(d=>d.id===id);
-  if(idx===-1) return;
-  despachos[idx] = {
-    ...despachos[idx],
-    guia:    document.getElementById('dedit-guia').value.trim(),
-    pallets: parseFloat(document.getElementById('dedit-pallets').value)||0,
-    fdesp:   formatFecha(document.getElementById('dedit-fdesp').value),
-    estado:  document.getElementById('dedit-estado').value,
-    obs:     document.getElementById('dedit-obs').value.trim(),
-  };
-  showLoading('Guardando…');
-  try{
-    await supaUpsertDespacho(despachos[idx]);
-    hideLoading();
-    toast('✅ Despacho actualizado');
-    document.getElementById('modal-despacho-edit').classList.remove('open');
-    renderDespachos();
-    updateKpiDespachos();
-  } catch(e){ hideLoading(); toast('⚠️ Error: '+e.message); }
-}
-
-// ══════════════════════════════════════════════
 //  ELIMINAR
 // ══════════════════════════════════════════════
-async function deleteDespacho(id){
-  if(!confirm('¿Eliminar este despacho?')) return;
-  showLoading('Eliminando…');
-  try{
-    await supaDeleteDespacho(id);
-    despachos = despachos.filter(d=>d.id!==id);
-    hideLoading();
-    toast('🗑 Despacho eliminado');
-    renderDespachos();
-    updateKpiDespachos();
-  } catch(e){ hideLoading(); toast('⚠️ Error: '+e.message); }
-}
+function deleteDespacho(id){ askDelete([id]); }
 
 // ══════════════════════════════════════════════
 //  RENDER TABLA
@@ -1234,11 +1323,13 @@ function renderDespachos(){
     });
   }
 
+  _vis=list.map(d=>d.id);
   const tbody = document.getElementById('despachos-tbody');
   if(!tbody) return;
 
   tbody.innerHTML = list.map(d=>`
   <tr onmouseover="this.style.background='#f0faf6'" onmouseout="this.style.background='white'" style="transition:background .12s">
+    <td class="dtd" style="text-align:center"><input type="checkbox" ${selected.has(d.id)?'checked':''} onchange="toggleSel('${d.id}',this.checked)"></td>
     <td class="dtd" style="font-weight:700;color:#1a4d4d">${d.cliente||'—'}</td>
     <td class="dtd">${d.of||'—'}</td>
     <td class="dtd"><span style="font-family:monospace;font-weight:600">${d.oc||'—'}</span></td>
@@ -1256,8 +1347,8 @@ function renderDespachos(){
     <td class="dtd" style="font-family:monospace;font-weight:600">${d.guia||'—'}</td>
     <td class="dtd" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;color:#6a8a80">${d.obs||'—'}</td>
     <td class="dtd no-print" style="white-space:nowrap">
-      <button onclick="openEditDespacho('${d.id}')" class="btn btn-ghost btn-sm" title="Editar rápido">✏️ Editar</button>
-      <button onclick="openDespachoModal(despachos.find(x=>x.id==='${d.id}'))" class="btn btn-primary btn-sm" title="Ver completo">👁 Ver</button>
+      
+      <button onclick="openDespachoModal(despachos.find(x=>x.id==='${d.id}'))" class="btn btn-primary btn-sm" title="Editar">✏️ Editar</button>
       <button onclick="deleteDespacho('${d.id}')" class="btn btn-danger btn-sm" title="Eliminar">🗑</button>
     </td>
   </tr>`).join('');
@@ -1267,6 +1358,7 @@ function renderDespachos(){
 
   updateKpiDespachos();
   fillMesFilter();
+  updSel();
 }
 
 // ══════════════════════════════════════════════
@@ -1428,7 +1520,7 @@ async function uploadDespMasivo(input){
 // ══════════════════════════════════════════════
 //  CERRAR MODALES AL CLICK AFUERA
 // ══════════════════════════════════════════════
-['modal-despacho','modal-despacho-edit','modal-diagnostico'].forEach(id=>{
+['modal-despacho','modal-diagnostico','modal-pw'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', e=>{ if(e.target===el) el.classList.remove('open'); });
 });
@@ -1451,7 +1543,7 @@ async function init(){
   }
 }
 
-init();
+startApp();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
@@ -1459,108 +1551,81 @@ init();
 //  PERSONALIZACIÓN — FONDO, ACENTO, LOGO
 // ══════════════════════════════════════════════
 
-// Guardar en localStorage
 function savePrefs(key, val){ try{ localStorage.setItem('lbd_'+key, val); }catch(e){} }
 function loadPref(key){ try{ return localStorage.getItem('lbd_'+key); }catch(e){ return null; } }
-
-// ── FONDO ──
-function setBg(el, color){
-  document.querySelectorAll('#settings-overlay .color-swatch').forEach(s=>s.classList.remove('active'));
-  el.classList.add('active');
-  applyBg(color);
-  savePrefs('bg', color);
-  document.getElementById('bg-custom').value = color;
+const TH_DEF = {bg:'#0d2b2b',side:'#123737',accent:'#2e9e7a',thead:'#1a4d4d',card:'#ffffff',shade:55,blur:0,img:''};
+const PRESETS = {
+  verde:{bg:'#0d2b2b',side:'#123737',accent:'#2e9e7a',thead:'#1a4d4d'},
+  azul:{bg:'#0d1b2b',side:'#12263b',accent:'#2563eb',thead:'#1a3a5c'},
+  morado:{bg:'#1a0d2b',side:'#26143c',accent:'#7c3aed',thead:'#3b1f66'},
+  rojo:{bg:'#2b1a1a',side:'#3b2121',accent:'#dc2626',thead:'#6b2020'},
+  negro:{bg:'#0d0d0d',side:'#1a1a1a',accent:'#d97706',thead:'#333333'}
+};
+let TH = {...TH_DEF};
+try{
+  const o = JSON.parse(localStorage.getItem('lbd_theme')||'null');
+  if(o) TH = {...TH,...o}; else { const b=loadPref('bg'), a=loadPref('accent'); if(b) TH.bg=b; if(a) TH.accent=a; }
+}catch(e){}
+function hexRGB(h){ return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); }
+function mix(h,t,p){ const c=hexRGB(h), d=hexRGB(t); return '#'+c.map((v,i)=>Math.round(v+(d[i]-v)*p).toString(16).padStart(2,'0')).join(''); }
+function applyTheme(){
+  const s = document.documentElement.style;
+  s.setProperty('--bg',TH.bg); s.setProperty('--side',TH.side); s.setProperty('--thead',TH.thead);
+  s.setProperty('--accent',TH.accent); s.setProperty('--green',TH.accent); s.setProperty('--green-light',TH.accent);
+  s.setProperty('--accent2',mix(TH.accent,'#000000',.35)); s.setProperty('--acc-l',mix(TH.accent,'#ffffff',.55));
+  s.setProperty('--card',hexRGB(TH.card).join(',')); s.setProperty('--shade',TH.shade/100); s.setProperty('--blur',TH.blur+'px');
+  document.getElementById('bg-layer').style.backgroundImage = TH.img ? `url(${TH.img})` : 'none';
+  const m = document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',TH.side);
+  ['bg','side','accent','thead','card','shade','blur'].forEach(k=>{ const e=document.getElementById('t-'+k); if(e && e.value!==String(TH[k])) e.value=TH[k]; });
 }
-function setBgCustom(color){
-  document.querySelectorAll('#settings-overlay .color-swatch').forEach(s=>s.classList.remove('active'));
-  applyBg(color);
-  savePrefs('bg', color);
-}
-function applyBg(color){
-  document.body.style.background = color;
-  document.getElementById('app-header').style.background = shadeColor(color, 10);
-  document.querySelector('.main-content').style.background = color+'cc';
-}
-function shadeColor(hex, pct){
-  // lighten hex by pct percent
-  let r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
-  r=Math.min(255,Math.round(r*(1+pct/100)));
-  g=Math.min(255,Math.round(g*(1+pct/100)));
-  b=Math.min(255,Math.round(b*(1+pct/100)));
-  return `rgb(${r},${g},${b})`;
-}
-
-// ── ACENTO ──
-function setAccent(el, color){
-  document.querySelectorAll('#settings-overlay .color-swatch').forEach(s=>s.classList.remove('active'));
-  el.classList.add('active');
-  applyAccent(color);
-  savePrefs('accent', color);
-}
-function applyAccent(color){
-  const root = document.documentElement;
-  root.style.setProperty('--green', color);
-  root.style.setProperty('--green-light', color);
-  // update table headers, btn-primary, kpi text
-  document.querySelectorAll('.dth, .dc-thead th').forEach(el=>el.style.background=color.replace(/^#/, '#')+'dd'||color);
-  document.querySelectorAll('.btn-primary').forEach(el=>el.style.background=`linear-gradient(135deg,${color},${color}bb)`);
-  document.querySelectorAll('.d-card p').forEach(el=>el.style.color=lightenHex(color,60));
-  savePrefs('accent', color);
-}
-function lightenHex(hex, amt){
-  let r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
-  r=Math.min(255,r+amt); g=Math.min(255,g+amt); b=Math.min(255,b+amt);
-  return `rgb(${r},${g},${b})`;
-}
-
-// ── LOGO ──
-function changeLogo(input){
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    const src = e.target.result;
-    const img = document.getElementById('header-logo-img');
-    const placeholder = document.getElementById('logo-placeholder');
-    img.src = src;
-    img.style.display = 'block';
-    placeholder.style.display = 'none';
-    document.getElementById('btn-remove-logo').style.display = 'block';
-    try{ localStorage.setItem('lbd_logo', src); }catch(e){}
+function saveTheme(){ try{ localStorage.setItem('lbd_theme',JSON.stringify(TH)); }catch(e){ toast('⚠️ No hay espacio para guardar (imagen muy pesada)'); } }
+function setT(k,v){ TH[k]=v; applyTheme(); saveTheme(); }
+function preset(n){ Object.assign(TH,PRESETS[n]); applyTheme(); saveTheme(); }
+function resetTheme(){ TH={...TH_DEF}; applyTheme(); saveTheme(); }
+function clearBgImage(){ TH.img=''; applyTheme(); saveTheme(); }
+function setBgImage(input){
+  const f = input.files[0]; if(!f) return;
+  const img = new Image();
+  img.onload = ()=>{
+    const k = Math.min(1,1920/img.width), c = document.createElement('canvas');
+    c.width = img.width*k; c.height = img.height*k;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    TH.img = c.toDataURL('image/jpeg',.8); applyTheme(); saveTheme(); input.value='';
   };
-  reader.readAsDataURL(file);
+  img.src = URL.createObjectURL(f);
 }
-function removeLogo(){
-  document.getElementById('header-logo-img').style.display = 'none';
-  document.getElementById('logo-placeholder').style.display = 'flex';
-  document.getElementById('btn-remove-logo').style.display = 'none';
-  try{ localStorage.removeItem('lbd_logo'); }catch(e){}
-}
+function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); }
 
-// ── CARGAR PREFS AL INICIAR ──
-(function loadSavedPrefs(){
-  const bg     = loadPref('bg');
-  const accent = loadPref('accent');
-  const logo   = loadPref('logo');
-  if(bg){
-    applyBg(bg);
-    const el = document.querySelector(`[data-bg="${bg}"]`);
-    if(el){ document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active')); el.classList.add('active'); }
-    try{ document.getElementById('bg-custom').value = bg; }catch(e){}
-  }
-  if(accent) applyAccent(accent);
-  if(logo){
-    const img = document.getElementById('header-logo-img');
-    const placeholder = document.getElementById('logo-placeholder');
-    if(img){ img.src=logo; img.style.display='block'; }
-    if(placeholder) placeholder.style.display='none';
-    const btnRm = document.getElementById('btn-remove-logo');
-    if(btnRm) btnRm.style.display='block';
-  }
-})();
-// ══════════════════════════════════════════════
+// ── LOGO (sidebar + pantalla de login) ──
+function paintLogo(src){
+  document.querySelectorAll('.brand-logo').forEach(i=>{ i.src=src||''; i.style.display=src?'block':'none'; });
+  document.querySelectorAll('.brand-ph').forEach(p=>p.style.display=src?'none':'flex');
+  const b = document.getElementById('btn-remove-logo'); if(b) b.style.display = src?'block':'none';
+}
+function changeLogo(input){
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e=>{ try{ localStorage.setItem('lbd_logo',e.target.result); }catch(x){ toast('⚠️ Logo muy pesado'); return; } paintLogo(e.target.result); };
+  r.readAsDataURL(f);
+}
+function removeLogo(){ try{ localStorage.removeItem('lbd_logo'); }catch(e){} paintLogo(''); }
+applyTheme(); paintLogo(loadPref('logo'));
+
+// ── PWA ──
+let _ip = null;
+addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); _ip=e; });
+function installApp(){
+  if(_ip){ _ip.prompt(); _ip=null; return; }
+  if(matchMedia('(display-mode: standalone)').matches){ toast('✅ La app ya está instalada'); return; }
+  alert('Para instalar:\n• iPhone (Safari): botón Compartir → "Añadir a pantalla de inicio"\n• Android (Chrome): menú ⋮ → "Instalar app"');
+}
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
 //  NAVEGACIÓN TABS
 // ══════════════════════════════════════════════
 function switchTab(tab){
+  document.getElementById('sidebar').classList.remove('open');
   ['despachos','dashboard','cubicacion'].forEach(t=>{
     document.getElementById('panel-'+t).classList.toggle('active', t===tab);
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
