@@ -756,20 +756,22 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
     <!-- PANEL DERECHO: RESULTADOS -->
     <div style="display:flex;flex-direction:column;gap:14px" id="cubo-results-panel">
 
-      <!-- RESUMEN — full width arriba -->
-      <div class="chart-card" id="cubo-detalle" style="display:none">
-        <div class="chart-card-title">📊 Resumen de cubicación</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div>
-            <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
-            <div id="detalle-capa" style="color:white;font-size:.88em;line-height:2.1"></div>
-          </div>
-          <div>
-            <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
-            <div id="detalle-pallet" style="color:white;font-size:.88em;line-height:2.1"></div>
-          </div>
-        </div>
-        <div id="orient-recomend" style="margin-top:14px;font-size:.88em;color:#a8e6c8;font-weight:600;background:rgba(46,158,122,.15);border-radius:8px;padding:8px 12px"></div>
+      <!-- TABLA RESUMEN POR PALLET — ancho completo -->
+      <div class="chart-card" id="cubo-tabla" style="display:none">
+        <div class="chart-card-title">📋 Resumen por pallet</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.92em">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.15)">
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:left">Pallet N°</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Unidades</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Capas</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Altura total (cm)</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Uds/capa</th>
+              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Ocupación</th>
+            </tr>
+          </thead>
+          <tbody id="cubo-tabla-body"></tbody>
+        </table>
       </div>
 
       <!-- 3D + TOP VIEW LADO A LADO -->
@@ -795,22 +797,20 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
         </div>
       </div>
 
-      <!-- TABLA RESUMEN POR PALLET — ancho completo -->
-      <div class="chart-card" id="cubo-tabla" style="display:none">
-        <div class="chart-card-title">📋 Resumen por pallet</div>
-        <table style="width:100%;border-collapse:collapse;font-size:.92em">
-          <thead>
-            <tr style="border-bottom:1px solid rgba(255,255,255,.15)">
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:left">Pallet N°</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Unidades</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Capas</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Altura total (cm)</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Uds/capa</th>
-              <th style="color:rgba(255,255,255,.6);font-weight:700;padding:10px 16px;text-align:right">Ocupación</th>
-            </tr>
-          </thead>
-          <tbody id="cubo-tabla-body"></tbody>
-        </table>
+      <!-- RESUMEN — full width arriba -->
+      <div class="chart-card" id="cubo-detalle" style="display:none">
+        <div class="chart-card-title">📊 Resumen de cubicación</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por capa</div>
+            <div id="detalle-capa" style="color:white;font-size:.88em;line-height:2.1"></div>
+          </div>
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:10px">Por pallet</div>
+            <div id="detalle-pallet" style="color:white;font-size:.88em;line-height:2.1"></div>
+          </div>
+        </div>
+        <div id="orient-recomend" style="margin-top:14px;font-size:.88em;color:#a8e6c8;font-weight:600;background:rgba(46,158,122,.15);border-radius:8px;padding:8px 12px"></div>
       </div>
 
       <!-- ESTADO VACÍO -->
@@ -1059,7 +1059,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = session.email||'';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v3';
   init();
 }
 async function doLogin(){
@@ -1620,8 +1620,11 @@ function installApp(){
   if(matchMedia('(display-mode: standalone)').matches){ toast('✅ La app ya está instalada'); return; }
   alert('Para instalar:\n• iPhone (Safari): botón Compartir → "Añadir a pantalla de inicio"\n• Android (Chrome): menú ⋮ → "Instalar app"');
 }
-if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'))
-  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(had) location.reload(); });
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));
+}
 
 //  NAVEGACIÓN TABS
 // ══════════════════════════════════════════════
