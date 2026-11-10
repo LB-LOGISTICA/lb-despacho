@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Despachos LB">
+<meta name="apple-mobile-web-app-title" content="DP Despachos">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -777,9 +777,10 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
 
         <!-- VISTA 3D -->
         <div class="chart-card" id="cubo-3d">
-          <div class="chart-card-title">🎲 Vista 3D — Pallet completo</div>
+          <div class="chart-card-title">🎲 Vista 3D — pallet real (arrastra para girar)</div>
+          <select id="pal3d-sel" style="width:100%;margin-bottom:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.2)"></select>
           <div style="display:flex;justify-content:center">
-            <canvas id="canvas-3d-a" width="280" height="320" style="border-radius:8px"></canvas>
+            <canvas id="canvas-3d-a" width="420" height="400" style="border-radius:8px;max-width:100%;touch-action:pan-y;cursor:grab"></canvas>
           </div>
         </div>
 
@@ -1632,6 +1633,7 @@ function switchTab(tab){
   });
   document.getElementById('despachos-actions').style.display = tab==='despachos' ? 'flex' : 'none';
   if(tab==='dashboard'){ fillDashFilters(); renderDashboard(); }
+  if(tab==='cubicacion' && typeof kick3D==='function') kick3D();
 }
 
 // ══════════════════════════════════════════════
@@ -2162,14 +2164,11 @@ function calcCubicacion(){
     porCapa = filas * cols;
     layout  = { tipo:'cuadrado', filas, cols };
   } else {
-    // 305x610 — SIEMPRE patrón mixto: 2 normales arriba + 2 rotadas abajo formando cuadrado 610x610
-    // Bloque unitario: 610mm x 610mm = 4 unidades
-    const bloqueW = pro.l; // 610mm
-    const bloqueL = pro.l; // 610mm
-    const bFilas  = Math.floor(pal.w / bloqueW);
-    const bCols   = Math.floor(pal.l / bloqueL);
+    // 305x610 — patrón molino: 4 piezas alrededor de un cuadro central de 305x305 (bloque 915x915)
+    const B = pro.w + pro.l;
+    const bFilas = Math.floor(pal.w / B), bCols = Math.floor(pal.l / B);
     porCapa = bFilas * bCols * 4;
-    layout  = { tipo:'patron4', bFilas, bCols, bloqueW, bloqueL, pro };
+    layout  = { tipo:'patron4', bFilas, bCols, B, pro };
   }
 
   if(porCapa === 0){
@@ -2210,7 +2209,7 @@ function calcCubicacion(){
 
   // ── Detalle ──
   const tipoLabel = layout.tipo==='patron4'
-    ? `Patrón 4 uds — 2 normales + 2 rotadas (cuadrado 610×610)`
+    ? `Molino: 4 uds alrededor de un cuadro central (bloque 915×915)`
     : `Normal ${layout.filas}×${layout.cols}`;
   s('detalle-capa').innerHTML = `
     <div>📐 Patrón: <strong>${tipoLabel}</strong></div>
@@ -2224,7 +2223,7 @@ function calcCubicacion(){
     <div>🪵 Base pallet: <strong>${PALLET_BASE_H} cm</strong></div>`;
   s('cubo-detalle').style.display = 'block';
   s('orient-recomend').innerHTML = layout.tipo==='patron4'
-    ? `✅ Patrón fijo: 2 piezas en posición normal + 2 rotadas 90° → <strong>${porCapa} unidades por capa</strong>`
+    ? `✅ Patrón molino: 2 de pie + 2 acostadas, cuadro central libre → <strong>${porCapa} unidades por capa</strong>`
     : `✅ Distribución: ${layout.filas} × ${layout.cols} = <strong>${porCapa} unidades por capa</strong>`;
 
   // ── Tabla por pallet ──
@@ -2257,7 +2256,7 @@ function calcCubicacion(){
   s('txt-a').textContent = `${porCapa} unidades por capa`;
 
   // ── Vista 3D — pallet completo siempre consistente, con flecha de medida ──
-  draw3DLayout('canvas-3d-a', pal, pro, layout, capasPorPallet, altMM, altPalletCm, ALTURA_MAX_TOTAL_CM);
+  setup3D(pal, pro, layout, porCapa, porPallet, totalPallets, resto, altMM);
 
   // Mostrar ambas vistas lado a lado
   const vistasRow = s('cubo-vistas-row');
@@ -2279,37 +2278,14 @@ function drawVistaLayout(canvasId, pal, pro, layout){
   ctx.fillStyle='rgba(139,90,43,.35)'; ctx.strokeStyle='rgba(180,120,50,.8)'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.roundRect(offX,offY,pal.w*scale,pal.l*scale,6); ctx.fill(); ctx.stroke();
 
-  if(layout.tipo==='cuadrado'){
-    // Productos cuadrados normales
-    for(let f=0;f<layout.filas;f++) for(let c=0;c<layout.cols;c++){
-      drawPieza(ctx, offX+f*pro.w*scale, offY+c*pro.l*scale, pro.w*scale-2, pro.l*scale-2, f*layout.cols+c+1, '#2e9e7a');
-    }
-  } else {
-    // Patrón 4: por cada bloque 610x610, dibujar 2 normales + 2 rotadas
-    let n=1;
-    for(let bf=0;bf<layout.bFilas;bf++){
-      for(let bc=0;bc<layout.bCols;bc++){
-        const bx = offX + bf*layout.bloqueW*scale;
-        const by = offY + bc*layout.bloqueL*scale;
-        // Pieza 1: normal izq arriba (305x610)
-        drawPieza(ctx, bx, by, pro.w*scale-2, pro.l*scale-2, n++, '#2e9e7a');
-        // Pieza 2: rotada der arriba (610x305)
-        drawPieza(ctx, bx+pro.w*scale, by, pro.l*scale-2, pro.w*scale-2, n++, '#38bdf8');
-        // Pieza 3: rotada der abajo (610x305)
-        drawPieza(ctx, bx+pro.w*scale, by+pro.w*scale, pro.l*scale-2, pro.w*scale-2, n++, '#38bdf8');
-        // Pieza 4: normal izq abajo (305x610)
-        drawPieza(ctx, bx, by+pro.l*scale, pro.w*scale-2, pro.l*scale-2, n++, '#2e9e7a');
-      }
-    }
-    // Leyenda colores
+  layoutPieces(pal,pro,layout).forEach((p,i)=>drawPieza(ctx, offX+p.x*scale, offY+p.y*scale, p.w*scale-2, p.l*scale-2, i+1, p.rot?'#38bdf8':'#2e9e7a'));
+  if(layout.tipo==='patron4'){
+    ctx.textBaseline='alphabetic'; ctx.font='9px Segoe UI'; ctx.textAlign='left';
     ctx.fillStyle='#2e9e7a'; ctx.fillRect(offX+2, offY+pal.l*scale+18, 12, 12);
-    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='9px Segoe UI'; ctx.textAlign='left';
-    ctx.fillText('Normal', offX+17, offY+pal.l*scale+28);
+    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fillText('De pie', offX+17, offY+pal.l*scale+28);
     ctx.fillStyle='#38bdf8'; ctx.fillRect(offX+65, offY+pal.l*scale+18, 12, 12);
-    ctx.fillStyle='rgba(255,255,255,.6)';
-    ctx.fillText('Rotada', offX+80, offY+pal.l*scale+28);
+    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fillText('Acostada', offX+80, offY+pal.l*scale+28);
   }
-
   ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
   ctx.fillText(`${pal.w}×${pal.l} mm`, CW/2, offY-6);
 }
@@ -2327,7 +2303,83 @@ function drawPieza(ctx, x, y, w, h, num, color){
   }
 }
 
-// ── Dibujar 3D según layout — escala SIEMPRE consistente respecto a 120cm totales ──
+// ── Piezas de una capa (mm, origen esquina del pallet) ──
+function layoutPieces(pal, pro, layout){
+  const P = [];
+  if(layout.tipo==='cuadrado'){
+    const ox=(pal.w-layout.filas*pro.w)/2, oy=(pal.l-layout.cols*pro.l)/2;
+    for(let f=0;f<layout.filas;f++) for(let c=0;c<layout.cols;c++) P.push({x:ox+f*pro.w,y:oy+c*pro.l,w:pro.w,l:pro.l,rot:0});
+  } else {
+    const a=pro.w, b=pro.l, B=a+b, ox=(pal.w-layout.bFilas*B)/2, oy=(pal.l-layout.bCols*B)/2;
+    for(let bf=0;bf<layout.bFilas;bf++) for(let bc=0;bc<layout.bCols;bc++){
+      const x=ox+bf*B, y=oy+bc*B;
+      P.push({x:x,y:y,w:a,l:b,rot:0},{x:x+a,y:y,w:b,l:a,rot:1},{x:x+b,y:y+a,w:a,l:b,rot:0},{x:x,y:y+b,w:b,l:a,rot:1});
+    }
+  }
+  return P;
+}
+
+// ── 3D giratorio: dibuja SOLO las capas reales del pallet elegido ──
+let cubo3d = null, _c3anim = null, _c3ang = 0.6, _c3drag = false;
+function setup3D(pal, pro, layout, porCapa, porPallet, totalPallets, resto, altMM){
+  const sel = document.getElementById('pal3d-sel');
+  sel.innerHTML = Array.from({length:totalPallets},(_,i)=>{ const u=(i===totalPallets-1&&resto>0)?resto:porPallet; return `<option value="${u}">Pallet ${i+1} · ${u} uds</option>`; }).join('');
+  cubo3d = {pal, pro, pieces:layoutPieces(pal,pro,layout), porCapa, altMM, units:+sel.value};
+  sel.onchange = ()=>{ cubo3d.units = +sel.value; };
+  kick3D();
+}
+function kick3D(){ if(cubo3d && !_c3anim) _c3anim = requestAnimationFrame(loop3D); }
+function loop3D(){
+  const cv = document.getElementById('canvas-3d-a');
+  if(!cubo3d || !cv || cv.offsetParent===null){ _c3anim=null; return; }
+  if(!_c3drag && !matchMedia('(prefers-reduced-motion: reduce)').matches) _c3ang += 0.008;
+  render3D(cv);
+  _c3anim = requestAnimationFrame(loop3D);
+}
+(function(){
+  const cv = document.getElementById('canvas-3d-a'); if(!cv) return; let lx = 0;
+  cv.addEventListener('pointerdown',e=>{ _c3drag=true; lx=e.clientX; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove',e=>{ if(_c3drag){ _c3ang += (e.clientX-lx)*0.01; lx=e.clientX; } });
+  ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{ _c3drag=false; }));
+})();
+function render3D(cv){
+  const {pal,pro,pieces,porCapa,altMM,units} = cubo3d, ctx = cv.getContext('2d'), CW = cv.width, CH = cv.height;
+  ctx.clearRect(0,0,CW,CH);
+  const baseH = PALLET_BASE_H*10, layers = Math.ceil(units/porCapa), rem = units%porCapa, H = baseH+layers*altMM;
+  const c = Math.cos(_c3ang), s = Math.sin(_c3ang), cp = Math.cos(.5), sp = Math.sin(.5);
+  const R = Math.hypot(pal.w,pal.l)/2, sc = Math.min(CW*.62/(2*R), (CH-60)/(H*cp+2*R*sp));
+  const cx = CW/2-10, cy = CH/2-8+sc*H*cp/2;
+  const P = (x,y,z)=>{ const X=x-pal.w/2, Y=y-pal.l/2, yr=X*s+Y*c; return [cx+sc*(X*c-Y*s), cy-sc*(z*cp+yr*sp), yr]; };
+  const box = (x0,y0,z0,x1,y1,z1,col)=>{
+    const Fs = [[null,[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]]],
+      [[-1,0],[[x0,y0,z0],[x0,y1,z0],[x0,y1,z1],[x0,y0,z1]]],
+      [[1,0],[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]]],
+      [[0,-1],[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]]],
+      [[0,1],[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]]]];
+    Fs.forEach(([n,pts])=>{
+      let f;
+      if(n){ const nyr=n[0]*s+n[1]*c; if(nyr>=0) return; const nxr=n[0]*c-n[1]*s; f=mix(col,'#000000',Math.min(.6,Math.max(.1,.42-.3*(-.6*nxr-.8*nyr)))); }
+      else f = mix(col,'#ffffff',.12);
+      ctx.beginPath(); pts.forEach((q,i)=>{ const p=P(q[0],q[1],q[2]); i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); });
+      ctx.closePath(); ctx.fillStyle=f; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=.8; ctx.stroke();
+    });
+  };
+  box(0,0,0,pal.w,pal.l,baseH,'#8b5a2b');
+  for(let l=0;l<layers;l++){
+    const z0 = baseH+l*altMM, list = (l===layers-1&&rem) ? pieces.slice(0,rem) : pieces;
+    list.map(p=>({p,d:P(p.x+p.w/2,p.y+p.l/2,0)[2]})).sort((a,b)=>b.d-a.d)
+      .forEach(o=>box(o.p.x+1,o.p.y+1,z0,o.p.x+o.p.w-1,o.p.y+o.p.l-1,z0+altMM,o.p.rot?'#38bdf8':'#2e9e7a'));
+  }
+  const lx = cx+sc*R+16, y0 = cy, y1 = cy-sc*H*cp;
+  ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1; ctx.beginPath();
+  ctx.moveTo(lx,y0); ctx.lineTo(lx,y1); ctx.moveTo(lx-4,y0); ctx.lineTo(lx+4,y0); ctx.moveTo(lx-4,y1); ctx.lineTo(lx+4,y1); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 13px Segoe UI'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText(+(H/10).toFixed(1)+' cm', lx+7, (y0+y1)/2);
+  ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='11px Segoe UI';
+  ctx.fillText(`${layers} capas · ${units} uds · ${altMM} mm c/u`, CW/2, CH-10);
+}
+
+// ── (antiguo) Dibujar 3D según layout ──
 function draw3DLayout(canvasId, pal, pro, layout, numCapas, altMM, altPalletCm, altMaxCm){
   const canvas = document.getElementById(canvasId); if(!canvas) return;
   const ctx = canvas.getContext('2d');
