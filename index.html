@@ -218,6 +218,13 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
 .mk{font-size:20px;text-align:center;line-height:26px;filter:drop-shadow(0 1px 2px #000);}
 .table-wrap table{min-width:1500px!important;}
 @media(max-width:860px){.rutas-grid{grid-template-columns:1fr;}#rutas-map{height:55vh;}.rutas-side{max-height:none;}}
+
+.rd-wrap{overflow-x:auto;}
+.rd-table{width:100%;border-collapse:collapse;font-size:.85em;color:#fff;min-width:640px;}
+.rd-table th{text-align:left;padding:8px;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.2);font-weight:600;}
+.rd-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);}
+.rd-chip{display:inline-block;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,.1);margin:0 8px 8px 0;font-size:.85em;color:#fff;}
+.rd-tag{padding:2px 9px;border-radius:10px;font-size:.82em;font-weight:700;white-space:nowrap;}
 </style>
 </head>
 <body class="locked">
@@ -861,6 +868,10 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
       <div class="chart-card"><div class="chart-card-title">🛣️ Rutas</div><div id="rutas-list"></div></div>
     </div>
   </div>
+  <div class="chart-card" id="rutas-desp-card">
+    <div class="chart-card-title">📦 Despachos por ruta</div>
+    <div id="rutas-desp"></div>
+  </div>
 </div>
 
 </div><!-- /inner-wrap -->
@@ -1146,7 +1157,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v4';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v5';
   init();
 }
 async function doLogin(){
@@ -1744,13 +1755,14 @@ function rutasRender(){
     <div class="r-act"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTranspModal('${t.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delItem('transp','${t.id}')">🗑</button></div></div>`).join('') || empty('Sin transportistas todavía');
   R$('rutas-list').innerHTML = MAES.rutas.map(r=>`<div class="r-item" onclick="focusR('${r.id}')"><b>🛣️ ${escH(r.nombre)}</b><span class="r-badge" style="color:${col[r.estado]||'#fff'}">${escH(r.estado||'')}</span>
     <small>${escH(transpName(r.transpId)||'Sin transportista')}${r.km?` · ${r.km} km · ${r.horas} h`:' · ⚠️ sin camino calculado'}</small>
-    <small>📦 ${despachos.filter(d=>d.rutaId===r.id).length} despacho(s)${r.pos?` · 🚚 ${rel(r.pos.t)}`:''}</small>
+    <small>${rutaStat(r.id)}${r.pos?` · 🚚 ${rel(r.pos.t)}`:''}</small>
     <div class="r-act"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openRutaModal('${r.id}')">✏️ Editar</button>
     <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleShare('${r.id}')">${_shareId===r.id?'⏹ Dejar de compartir':'📡 Compartir mi ubicación'}</button>
     <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delItem('ruta','${r.id}')">🗑</button></div></div>`).join('') || empty('Sin rutas todavía');
+  renderRutaDesp();
 }
 function focusT(id){ const t=MAES.transp.find(x=>x.id===id); if(t&&t.lat!=null) rmap.setView([t.lat,t.lng],12); }
-function focusR(id){ const r=MAES.rutas.find(x=>x.id===id); if(r&&r.geom&&r.geom.length) rmap.fitBounds(L.polyline(r.geom).getBounds(),{padding:[30,30]}); }
+function focusR(id){ _rdSel='r:'+id; renderRutaDesp(); const r=MAES.rutas.find(x=>x.id===id); if(r&&r.geom&&r.geom.length) rmap.fitBounds(L.polyline(r.geom).getBounds(),{padding:[30,30]}); }
 
 // ── Transportistas ──
 function openTranspModal(id){
@@ -1842,6 +1854,38 @@ function fillRutaSel(sel){
   const t = R$('d-transp').value, sr = R$('d-ruta');
   sr.innerHTML = '<option value="">— Sin ruta —</option>' + MAES.rutas.filter(r=>!t||r.transpId===t).map(r=>`<option value="${r.id}">${escH(r.nombre)}</option>`).join('');
   sr.value = sel||'';
+}
+
+// ── Despachos por ruta (según fecha de despacho/entrega) ──
+let _rdSel = 'all';
+function fechaDesp(d){ const v=toInputDate(d.fdesp); if(!v) return null; const p=v.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+function esPend(d){ return d.estado!=='DESPACHOS OK'; }
+function plazo(d){
+  if(!esPend(d)) return {t:'✅ Entregado',c:'#22c55e'};
+  const f=fechaDesp(d); if(!f) return {t:'Sin fecha',c:'#9ca3af'};
+  const hoy=new Date(); hoy.setHours(0,0,0,0); const n=Math.round((f-hoy)/864e5);
+  if(n<0) return {t:`⚠️ Vencido ${-n} d`,c:'#ef4444'};
+  if(n===0) return {t:'🔔 Hoy',c:'#f59e0b'};
+  return {t:`En ${n} d`,c:'#38bdf8'};
+}
+function rutaStat(id){
+  const l=despachos.filter(d=>d.rutaId===id), p=l.filter(esPend), v=p.filter(d=>plazo(d).t.startsWith('⚠️'));
+  return `📦 ${l.length} despacho(s) · ⏳ ${p.length} pendiente(s)${v.length?` · ⚠️ ${v.length} vencido(s)`:''}`;
+}
+function renderRutaDesp(){
+  const box=R$('rutas-desp'); if(!box) return;
+  const opts=[['all','Todas las rutas']].concat(MAES.rutas.map(r=>['r:'+r.id,r.nombre]),[['none','Con transportista, sin ruta']]);
+  if(!opts.some(o=>o[0]===_rdSel)) _rdSel='all';
+  let l=despachos.filter(d=>d.rutaId||d.transpId);
+  if(_rdSel.startsWith('r:')) l=despachos.filter(d=>d.rutaId===_rdSel.slice(2));
+  else if(_rdSel==='none') l=despachos.filter(d=>d.transpId&&!d.rutaId);
+  l=l.slice().sort((a,b)=>{ const ea=esPend(a)?0:1, eb=esPend(b)?0:1; if(ea!==eb) return ea-eb; const fa=fechaDesp(a), fb=fechaDesp(b); return (fa?fa.getTime():9e15)-(fb?fb.getTime():9e15); });
+  const p=l.filter(esPend), v=p.filter(d=>plazo(d).t.startsWith('⚠️')), h=p.filter(d=>plazo(d).t==='🔔 Hoy');
+  const pal=p.reduce((a,d)=>a+(d.pallets||0),0);
+  box.innerHTML=`<select onchange="_rdSel=this.value;renderRutaDesp()" style="width:100%;max-width:360px;margin-bottom:12px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.2)">${opts.map(o=>`<option value="${escH(o[0])}"${o[0]===_rdSel?' selected':''} style="color:#000">${escH(o[1])}</option>`).join('')}</select>
+  <div><span class="rd-chip">📦 ${l.length} despachos</span><span class="rd-chip" style="background:rgba(245,158,11,.25)">⏳ ${p.length} pendientes</span><span class="rd-chip" style="background:rgba(239,68,68,.25)">⚠️ ${v.length} vencidos</span><span class="rd-chip">🔔 ${h.length} para hoy</span><span class="rd-chip">🧱 ${pal} pallets pendientes</span></div>`+
+  (l.length?`<div class="rd-wrap"><table class="rd-table"><thead><tr><th>F. despacho</th><th>Plazo</th><th>Cliente</th><th>OC</th><th>OF</th><th>Pallets</th><th>Estado</th><th>Transporte</th></tr></thead><tbody>${l.map(d=>{const z=plazo(d);return `<tr><td>${escH(d.fdesp||'—')}</td><td><span class="rd-tag" style="background:${z.c}33;color:${z.c}">${z.t}</span></td><td>${escH(d.cliente)}</td><td>${escH(d.oc)}</td><td>${escH(d.of)}</td><td>${d.pallets||0}</td><td>${escH(d.estado)}</td><td>${escH(transpName(d.transpId)||'—')}${d.rutaId?`<small style="display:block;opacity:.6">🛣️ ${escH(rutaName(d.rutaId))}</small>`:''}</td></tr>`;}).join('')}</tbody></table></div>`
+  :`<div style="color:rgba(255,255,255,.5);font-size:.88em">Aún no hay despachos con transporte. Asígnalos en el formulario de despacho.</div>`);
 }
 
 startApp();
