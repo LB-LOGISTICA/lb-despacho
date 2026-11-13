@@ -225,6 +225,14 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
 .rd-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);}
 .rd-chip{display:inline-block;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,.1);margin:0 8px 8px 0;font-size:.85em;color:#fff;}
 .rd-tag{padding:2px 9px;border-radius:10px;font-size:.82em;font-weight:700;white-space:nowrap;}
+
+.rutas-grid{grid-template-columns:minmax(300px,42%) 1fr!important;align-items:start;}
+.rutas-left,.rutas-right{display:flex;flex-direction:column;gap:14px;min-width:0;}
+#rutas-map{height:calc(100vh - 200px)!important;min-height:380px;}
+#transp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;max-height:300px;overflow-y:auto;}
+#transp-list .r-item,#rutas-list .r-item{margin-bottom:0;}
+#rutas-list{display:flex;flex-direction:column;gap:8px;}
+@media(max-width:860px){.rutas-grid{grid-template-columns:1fr!important;}}
 </style>
 </head>
 <body class="locked">
@@ -258,6 +266,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
   <div class="sb-spacer"></div>
   <button class="btn sb-btn" onclick="abrirDiagnosticoFechas()">🔍 Diagnóstico de fechas</button>
   <button class="btn sb-btn" onclick="openSettings()">🎨 Personalizar</button>
+  <button class="btn sb-btn" onclick="respaldoExcel()">⬇️ Respaldo Excel</button>
   <button class="btn sb-btn" onclick="installApp()">📲 Instalar app</button>
   <div id="sb-user" style="font-size:.72em;opacity:.6;text-align:center;word-break:break-all"></div>
   <button class="btn sb-btn" onclick="doLogout()">🚪 Cerrar sesión</button>
@@ -862,15 +871,17 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
     </div>
   </div>
   <div class="rutas-grid">
-    <div id="rutas-map"></div>
-    <div class="rutas-side">
-      <div class="chart-card"><div class="chart-card-title">🏢 Transportistas</div><div id="transp-list"></div></div>
+    <div class="rutas-left">
+      <div id="rutas-map"></div>
       <div class="chart-card"><div class="chart-card-title">🛣️ Rutas</div><div id="rutas-list"></div></div>
     </div>
-  </div>
-  <div class="chart-card" id="rutas-desp-card">
-    <div class="chart-card-title">📦 Despachos por ruta</div>
-    <div id="rutas-desp"></div>
+    <div class="rutas-right">
+      <div class="chart-card"><div class="chart-card-title">🏢 Transportistas</div><div id="transp-list"></div></div>
+      <div class="chart-card" id="rutas-desp-card">
+        <div class="chart-card-title">📦 Despachos por ruta</div>
+        <div id="rutas-desp"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1157,7 +1168,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v5';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v6';
   init();
 }
 async function doLogin(){
@@ -1729,7 +1740,7 @@ async function buildRoute(places){
 function rutasShow(){
   if(!window.L){ toast('⚠️ No cargó el mapa (revisa internet)'); return; }
   if(!rmap){
-    rmap = L.map('rutas-map');
+    rmap = L.map('rutas-map',{zoomSnap:.25});
     rmap.fitBounds([[-56,-76],[-17.5,-66.5]]);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(rmap);
     rLayer = L.layerGroup().addTo(rmap);
@@ -1886,6 +1897,77 @@ function renderRutaDesp(){
   <div><span class="rd-chip">📦 ${l.length} despachos</span><span class="rd-chip" style="background:rgba(245,158,11,.25)">⏳ ${p.length} pendientes</span><span class="rd-chip" style="background:rgba(239,68,68,.25)">⚠️ ${v.length} vencidos</span><span class="rd-chip">🔔 ${h.length} para hoy</span><span class="rd-chip">🧱 ${pal} pallets pendientes</span></div>`+
   (l.length?`<div class="rd-wrap"><table class="rd-table"><thead><tr><th>F. despacho</th><th>Plazo</th><th>Cliente</th><th>OC</th><th>OF</th><th>Pallets</th><th>Estado</th><th>Transporte</th></tr></thead><tbody>${l.map(d=>{const z=plazo(d);return `<tr><td>${escH(d.fdesp||'—')}</td><td><span class="rd-tag" style="background:${z.c}33;color:${z.c}">${z.t}</span></td><td>${escH(d.cliente)}</td><td>${escH(d.oc)}</td><td>${escH(d.of)}</td><td>${d.pallets||0}</td><td>${escH(d.estado)}</td><td>${escH(transpName(d.transpId)||'—')}${d.rutaId?`<small style="display:block;opacity:.6">🛣️ ${escH(rutaName(d.rutaId))}</small>`:''}</td></tr>`;}).join('')}</tbody></table></div>`
   :`<div style="color:rgba(255,255,255,.5);font-size:.88em">Aún no hay despachos con transporte. Asígnalos en el formulario de despacho.</div>`);
+}
+
+// ══════════════════════════════════════════════
+//  RESPALDO COMPLETO EN EXCEL (una hoja por módulo)
+// ══════════════════════════════════════════════
+function aoaSheet(rows){
+  const ws = XLSX.utils.aoa_to_sheet(rows), w = [];
+  rows.forEach(r=>r.forEach((v,i)=>{ w[i] = Math.max(w[i]||8, Math.min(45, String(v==null?'':v).length+2)); }));
+  ws['!cols'] = w.map(x=>({wch:x}));
+  return ws;
+}
+function jsonSheet(arr, vacio){
+  if(!arr.length) return aoaSheet([[vacio]]);
+  const h = Object.keys(arr[0]);
+  return aoaSheet([h, ...arr.map(o=>h.map(k=>o[k]))]);
+}
+function respaldoExcel(){
+  if(!window.XLSX){ toast('⚠️ Excel no disponible (revisa internet)'); return; }
+  const wb = XLSX.utils.book_new(), add = (n,ws)=>XLSX.utils.book_append_sheet(wb,ws,n);
+  const now = new Date(), pz = n=>String(n).padStart(2,'0'), num = v=>Number(v)||0;
+  const stamp = `${now.getFullYear()}-${pz(now.getMonth()+1)}-${pz(now.getDate())}_${pz(now.getHours())}${pz(now.getMinutes())}`;
+  const limpio = t => String(t).replace(/[^\p{L}\p{N}\s.\-]/gu,'').trim();
+  const pend = despachos.filter(esPend);
+
+  // Info
+  add('Info', aoaSheet([['Respaldo — Sistema despachos LB'],['Fecha',now.toLocaleString('es-CL')],['Usuario',session?session.email:''],[],
+    ['Hoja','Contenido'],['Despachos',despachos.length+' registros'],['Dashboard','Resumen y totales'],['Cubicación','Último cálculo realizado'],
+    ['Transportistas',MAES.transp.length+' registros'],['Rutas',MAES.rutas.length+' registros'],['Despachos por ruta','Despachos con transporte asignado']]));
+
+  // Despachos
+  add('Despachos', jsonSheet(despachos.map(d=>({
+    'Cliente':d.cliente,'OF':d.of,'OC':d.oc,'Descripción 1':d.desc1,'Descripción 2':d.desc2,'Cantidad':d.cant,'Peso Pallet (kg)':d.peso,
+    'Dimensión Pallet':d.dim,'Volumen m³':d.vol,'Quarter':d.quarter,'F. Ingreso':d.fechaIngreso,'F. Despacho':formatFecha(d.fdesp),
+    'Estado':d.estado,'Pallets':d.pallets,'Guía':d.guia,'Observación':d.obs,'Transportista':transpName(d.transpId),'Ruta':rutaName(d.rutaId),'ID':d.id
+  })), 'Sin despachos'));
+
+  // Dashboard
+  const tot = [['RESUMEN GENERAL',''],['Total despachos',despachos.length],['Pallets totales',despachos.reduce((a,d)=>a+num(d.pallets),0)],
+    ['OC distintas',new Set(despachos.map(d=>d.oc).filter(Boolean)).size],['Guías emitidas',new Set(despachos.map(d=>d.guia).filter(g=>g&&g!=='-')).size],
+    ['Volumen total m³',+despachos.reduce((a,d)=>a+num(d.vol),0).toFixed(2)],['Peso total kg',+despachos.reduce((a,d)=>a+num(d.peso),0).toFixed(1)],
+    ['Despachos OK',despachos.length-pend.length],['Pendientes',pend.length],
+    ['Cumplimiento %',despachos.length?Math.round((despachos.length-pend.length)/despachos.length*100):0],[]];
+  const grp = (titulo, fn)=>{
+    const m = {}; despachos.forEach(d=>{ const k=fn(d)||'(sin dato)'; (m[k]=m[k]||{n:0,p:0,v:0}); m[k].n++; m[k].p+=num(d.pallets); m[k].v+=num(d.vol); });
+    return [[titulo,'Despachos','Pallets','Volumen m³'], ...Object.keys(m).sort().map(k=>[k,m[k].n,m[k].p,+m[k].v.toFixed(2)]), []];
+  };
+  add('Dashboard', aoaSheet([...tot, ...grp('POR CLIENTE',d=>d.cliente), ...grp('POR MES (F. despacho)',d=>(toInputDate(d.fdesp)||'').slice(0,7)),
+    ...grp('POR QUARTER',d=>d.quarter), ...grp('POR ESTADO',d=>d.estado)]));
+
+  // Cubicación (último cálculo en pantalla)
+  const cub = [];
+  const body = R$('cubo-tabla-body');
+  if(body && body.children.length){
+    R$('cubo-detalle').textContent.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean).forEach(x=>cub.push([x]));
+    cub.push([]);
+    R$('cubo-tabla').querySelectorAll('tr').forEach(tr=>cub.push([...tr.children].map(c=>c.textContent.replace(/\s+/g,' ').trim())));
+  } else cub.push(['Aún no se ha realizado un cálculo de cubicación en esta sesión']);
+  add('Cubicación', aoaSheet(cub));
+
+  // Rutas
+  const vacioM = maesErr ? 'Tabla "maestros" no configurada en Supabase' : 'Sin registros';
+  add('Transportistas', jsonSheet(MAES.transp.map(t=>({'Nombre':t.nombre,'Dirección':t.dir,'Comuna / Ciudad':t.com,'Teléfono':t.tel,'Contacto':t.contacto,'Latitud':t.lat,'Longitud':t.lng,'ID':t.id})), vacioM));
+  add('Rutas', jsonSheet(MAES.rutas.map(r=>{ const l=despachos.filter(d=>d.rutaId===r.id);
+    return {'Ruta':r.nombre,'Transportista':transpName(r.transpId),'Origen':r.origen,'Destino':r.destino,'Paradas':(r.paradas||[]).join(' | '),'Estado':r.estado,'Fecha salida':r.salida,
+      'Km':r.km,'Horas':r.horas,'Despachos':l.length,'Pendientes':l.filter(esPend).length,'Última posición':r.pos?`${r.pos.lat.toFixed(5)}, ${r.pos.lng.toFixed(5)} (${rel(r.pos.t)})`:'','ID':r.id}; }), vacioM));
+  add('Despachos por ruta', jsonSheet(despachos.filter(d=>d.rutaId||d.transpId).sort((a,b)=>(fechaDesp(a)||9e15)-(fechaDesp(b)||9e15)).map(d=>({
+    'Ruta':rutaName(d.rutaId),'Transportista':transpName(d.transpId),'F. Despacho':formatFecha(d.fdesp),'Plazo':limpio(plazo(d).t),'Cliente':d.cliente,'OC':d.oc,'OF':d.of,'Pallets':d.pallets,'Estado':d.estado,'Guía':d.guia})),
+    'Aún no hay despachos con transporte asignado'));
+
+  XLSX.writeFile(wb, `Respaldo_DespachosLB_${stamp}.xlsx`);
+  toast('✅ Respaldo descargado (' + wb.SheetNames.length + ' hojas)');
 }
 
 startApp();
