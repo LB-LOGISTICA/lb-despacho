@@ -9,6 +9,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#123737">
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -204,6 +206,18 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
   .form-grid,.form-grid-3{grid-template-columns:1fr;}
   #panel-cubicacion div[style*="400px 1fr"]{grid-template-columns:1fr!important;}
 }
+
+/* ══ Rutas ══ */
+.rutas-grid{display:grid;grid-template-columns:1fr 380px;gap:14px;min-height:0;}
+#rutas-map{height:calc(100vh - 150px);min-height:420px;border-radius:14px;border:1px solid rgba(255,255,255,.15);z-index:1;}
+.rutas-side{display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 150px);overflow-y:auto;}
+.r-item{padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.07);margin-bottom:8px;color:#fff;font-size:.86em;cursor:pointer;}
+.r-item small{color:rgba(255,255,255,.62);display:block;margin-top:2px;}
+.r-act{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.r-badge{font-size:.78em;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.15);margin-left:6px;}
+.mk{font-size:20px;text-align:center;line-height:26px;filter:drop-shadow(0 1px 2px #000);}
+.table-wrap table{min-width:1500px!important;}
+@media(max-width:860px){.rutas-grid{grid-template-columns:1fr;}#rutas-map{height:55vh;}.rutas-side{max-height:none;}}
 </style>
 </head>
 <body class="locked">
@@ -233,6 +247,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
   <button class="nav-tab active" id="tab-despachos" onclick="switchTab('despachos')">🚚 Despachos</button>
   <button class="nav-tab" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
   <button class="nav-tab" id="tab-cubicacion" onclick="switchTab('cubicacion')">📦 Cubicación</button>
+  <button class="nav-tab" id="tab-rutas" onclick="switchTab('rutas')">🗺️ Rutas</button>
   <div class="sb-spacer"></div>
   <button class="btn sb-btn" onclick="abrirDiagnosticoFechas()">🔍 Diagnóstico de fechas</button>
   <button class="btn sb-btn" onclick="openSettings()">🎨 Personalizar</button>
@@ -406,6 +421,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
         <col style="width:4%">  <!-- Pallets -->
         <col style="width:4%">  <!-- Guía -->
         <col style="width:9%">  <!-- Obs -->
+        <col style="width:10%">  <!-- Transporte -->
         <col style="width:7%">  <!-- Acciones -->
       </colgroup>
       <thead>
@@ -428,6 +444,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
           <th class="dth right" onclick="sortDesp('pallets')" style="cursor:pointer">Pallets <span id="sort-pallets"></span></th>
           <th class="dth right">Guía</th>
           <th class="dth">Observación</th>
+          <th class="dth">Transporte</th>
           <th class="dth no-print" style="text-align:center">
             <button onclick="clearColFilters()" title="Limpiar filtros de columna" style="background:rgba(255,100,100,.25);border:none;color:#ffaaaa;border-radius:6px;padding:2px 8px;font-size:.75em;cursor:pointer">✖ Filtros</button>
           </th>
@@ -462,6 +479,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
           </th>
           <th class="dth" style="padding:4px 5px"></th>
           <th class="dth" style="padding:4px 5px"><input class="col-filter" id="cf-guia" placeholder="🔍" oninput="renderDespachos()"></th>
+          <th class="dth" style="padding:4px 5px"></th>
           <th class="dth" style="padding:4px 5px"></th>
           <th class="dth no-print" style="padding:4px 5px"></th>
         </tr>
@@ -823,6 +841,28 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
   </div>
 </div><!-- /panel-cubicacion -->
 
+<!-- ══ RUTAS VIEW ══ -->
+<div class="view-panel" id="panel-rutas">
+  <div class="top-bar">
+    <div>
+      <div class="page-title">🗺️ <span>Rutas y transportes</span></div>
+      <div style="font-size:.8em;color:rgba(255,255,255,.65);margin-top:3px">Mapa de Chile, direcciones de transportistas y seguimiento de rutas</div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" id="btn-sql" style="display:none" onclick="showSqlHelp()">⚙️ Configurar base de datos</button>
+      <button class="btn btn-primary" onclick="openTranspModal()">＋ Transportista</button>
+      <button class="btn btn-primary" onclick="openRutaModal()">＋ Ruta</button>
+    </div>
+  </div>
+  <div class="rutas-grid">
+    <div id="rutas-map"></div>
+    <div class="rutas-side">
+      <div class="chart-card"><div class="chart-card-title">🏢 Transportistas</div><div id="transp-list"></div></div>
+      <div class="chart-card"><div class="chart-card-title">🛣️ Rutas</div><div id="rutas-list"></div></div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /inner-wrap -->
 </div><!-- /main-content -->
 
@@ -869,6 +909,9 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
       <div class="section-label">Fechas y Despacho</div>
       <div class="form-group"><label>Fecha Despacho</label><input id="d-fdesp" type="date"></div>
       <div class="form-group"><label>N° Guía <span style="font-size:.8em;color:#6a8a80;font-weight:400">(se puede agregar después)</span></label><input id="d-guia" placeholder="Ej: 7919"></div>
+      <div class="section-label" style="grid-column:1/-1">Transporte y Ruta</div>
+      <div class="form-group"><label>Transportista</label><select id="d-transp" onchange="fillRutaSel('')"></select></div>
+      <div class="form-group"><label>Ruta</label><select id="d-ruta"></select></div>
       <div class="form-group full"><label>Observación</label><textarea id="d-obs" placeholder="Notas adicionales…"></textarea></div>
     </div>
     <div class="modal-footer">
@@ -896,6 +939,50 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
     </div>
   </div>
 </div>
+
+<!-- ══ MODALES RUTAS ══ -->
+<div class="modal-overlay" id="modal-transp"><div class="modal" style="max-width:520px">
+  <h2 id="tp-title">🏢 Transportista</h2>
+  <div class="form-grid">
+    <div class="form-group full"><label>Nombre / Empresa *</label><input id="tp-nombre"></div>
+    <div class="form-group full"><label>Dirección</label><input id="tp-dir" placeholder="Ej: Av. Las Industrias 1234"></div>
+    <div class="form-group"><label>Comuna / Ciudad</label><input id="tp-com" placeholder="Ej: Quilicura, Santiago"></div>
+    <div class="form-group"><label>Teléfono</label><input id="tp-tel" type="tel"></div>
+    <div class="form-group full"><label>Contacto</label><input id="tp-cont"></div>
+  </div>
+  <div id="tp-pick" style="font-size:.82em;color:#6a8a80;margin-top:8px">La ubicación se busca sola desde la dirección.</div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeM('modal-transp')">Cancelar</button>
+    <button class="btn btn-ghost" onclick="pickOnMap()">📍 Ubicar en el mapa</button>
+    <button class="btn btn-primary" onclick="saveTransp()">💾 Guardar</button>
+  </div>
+</div></div>
+<div class="modal-overlay" id="modal-ruta"><div class="modal" style="max-width:560px">
+  <h2 id="ru-title">🛣️ Ruta</h2>
+  <div class="form-grid">
+    <div class="form-group full"><label>Nombre de la ruta *</label><input id="ru-nombre" placeholder="Ej: Santiago → Antofagasta"></div>
+    <div class="form-group full"><label>Transportista</label><select id="ru-transp"></select></div>
+    <div class="form-group"><label>Origen *</label><input id="ru-origen" placeholder="Ej: Quilicura, Santiago"></div>
+    <div class="form-group"><label>Destino *</label><input id="ru-destino" placeholder="Ej: Antofagasta"></div>
+    <div class="form-group full"><label>Paradas intermedias <span style="font-size:.8em;color:#6a8a80;font-weight:400">(una por línea, opcional)</span></label><textarea id="ru-paradas" rows="2"></textarea></div>
+    <div class="form-group"><label>Estado</label><select id="ru-estado"><option>PROGRAMADA</option><option>EN RUTA</option><option>ENTREGADA</option></select></div>
+    <div class="form-group"><label>Fecha salida</label><input id="ru-salida" type="date"></div>
+  </div>
+  <div style="font-size:.82em;color:#6a8a80;margin-top:8px">El camino y los kilómetros se calculan solos al guardar.</div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeM('modal-ruta')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveRuta()">💾 Guardar</button>
+  </div>
+</div></div>
+<div class="modal-overlay" id="modal-sql" style="z-index:800"><div class="modal" style="max-width:600px">
+  <h2>⚙️ Falta crear la tabla en Supabase</h2>
+  <p style="font-size:.88em;color:#6a8a80;margin-bottom:10px">Copia este código, pégalo en Supabase → SQL Editor y presiona Run. Se hace una sola vez.</p>
+  <textarea id="sql-box" readonly rows="9" style="font-family:monospace;font-size:.8em"></textarea>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeM('modal-sql')">Cerrar</button>
+    <button class="btn btn-primary" onclick="copySql()">📋 Copiar SQL</button>
+  </div>
+</div></div>
 
 <!-- ══ MODAL AUTORIZACIÓN PARA BORRAR ══ -->
 <div class="modal-overlay" id="modal-pw" style="z-index:800">
@@ -1059,7 +1146,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v3';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v4';
   init();
 }
 async function doLogin(){
@@ -1186,6 +1273,7 @@ function openDespachoModal(desp=null){
   if(est) est.value = desp?.estado||'PENDIENTE';
   if(desp?.dim) calcVolumen();
   else { const v=document.getElementById('d-vol'); if(v) v.value=''; }
+  fillTranspForm(desp);
   document.getElementById('modal-despacho').classList.add('open');
 }
 
@@ -1219,6 +1307,8 @@ async function saveDespacho(){
     pallets:      parseFloat(document.getElementById('d-pallets').value)||0,
     guia:         document.getElementById('d-guia').value.trim(),
     obs:          document.getElementById('d-obs').value.trim(),
+    transpId:     document.getElementById('d-transp').value,
+    rutaId:       document.getElementById('d-ruta').value,
   };
   showLoading('Guardando despacho…');
   try{
@@ -1347,6 +1437,7 @@ function renderDespachos(){
     <td class="dtd right">${d.pallets||0}</td>
     <td class="dtd" style="font-family:monospace;font-weight:600">${d.guia||'—'}</td>
     <td class="dtd" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;color:#6a8a80">${d.obs||'—'}</td>
+    ${transpCell(d)}
     <td class="dtd no-print" style="white-space:nowrap">
       
       <button onclick="openDespachoModal(despachos.find(x=>x.id==='${d.id}'))" class="btn btn-primary btn-sm" title="Editar">✏️ Editar</button>
@@ -1408,7 +1499,7 @@ function exportDespachosExcel(){
     'Cantidad':d.cant,'Peso Pallet (kg)':d.peso,'Dimensión Pallet':d.dim,
     'Volumen m³':d.vol,'Quarter':d.quarter,
     'F. Ingreso':d.fechaIngreso,'F. Despacho':formatFecha(d.fdesp),
-    'Estado':d.estado,'Pallets':d.pallets,'Guía':d.guia,'Observación':d.obs
+    'Estado':d.estado,'Pallets':d.pallets,'Guía':d.guia,'Observación':d.obs,'Transportista':transpName(d.transpId),'Ruta':rutaName(d.rutaId)
   })));
   ws['!cols']=[{wch:18},{wch:14},{wch:14},{wch:28},{wch:22},{wch:8},{wch:14},{wch:18},{wch:10},{wch:8},{wch:14},{wch:14},{wch:16},{wch:8},{wch:10},{wch:28}];
   const wb = XLSX.utils.book_new();
@@ -1521,7 +1612,7 @@ async function uploadDespMasivo(input){
 // ══════════════════════════════════════════════
 //  CERRAR MODALES AL CLICK AFUERA
 // ══════════════════════════════════════════════
-['modal-despacho','modal-diagnostico','modal-pw'].forEach(id=>{
+['modal-despacho','modal-diagnostico','modal-pw','modal-transp','modal-ruta','modal-sql'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', e=>{ if(e.target===el) el.classList.remove('open'); });
 });
@@ -1533,6 +1624,7 @@ async function init(){
   showLoading('Cargando despachos…');
   try{
     despachos = await supaGetDespachos();
+    await loadMaestros();
     hideLoading();
     renderDespachos();
     updateKpiDespachos();
@@ -1542,6 +1634,214 @@ async function init(){
     toast('⚠️ Error al cargar: '+e.message);
     renderDespachos();
   }
+}
+
+// ══════════════════════════════════════════════
+//  RUTAS Y TRANSPORTES
+// ══════════════════════════════════════════════
+let MAES = {transp:[], rutas:[]}, maesErr = false, rmap = null, rLayer = null;
+let _pick = null, _pickedT = null, _editT = null, _editR = null, _geoWatch = null, _shareId = null;
+const R$ = id => document.getElementById(id);
+const escH = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rSleep = ms => new Promise(r=>setTimeout(r,ms));
+const rel = t => { const m=Math.round((Date.now()-t)/60000); return m<1?'ahora':m<60?`hace ${m} min`:`hace ${Math.round(m/60)} h`; };
+function closeM(id){ R$(id).classList.remove('open'); }
+function transpName(id){ const t=MAES.transp.find(x=>x.id===id); return t?t.nombre:''; }
+function rutaName(id){ const r=MAES.rutas.find(x=>x.id===id); return r?r.nombre:''; }
+function transpCell(d){
+  const t=transpName(d.transpId), r=rutaName(d.rutaId);
+  return `<td class="dtd" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;font-size:.85em">${t?escH(t):'—'}${r?`<small style="display:block;color:#6a8a80">🛣️ ${escH(r)}</small>`:''}</td>`;
+}
+
+const SQL_MAES = `create table if not exists public.maestros (
+  id text primary key,
+  tipo text not null,
+  data jsonb not null,
+  created_at timestamptz default now()
+);
+alter table public.maestros enable row level security;
+create policy "maestros_auth_all" on public.maestros
+  for all to authenticated using (true) with check (true);`;
+function showSqlHelp(){ R$('sql-box').value = SQL_MAES; R$('modal-sql').classList.add('open'); }
+function copySql(){ navigator.clipboard.writeText(SQL_MAES).then(()=>toast('✅ SQL copiado')).catch(()=>{ R$('sql-box').select(); }); }
+function maesError(e){ toast('⚠️ '+e.message.slice(0,120)); if(/maestros|relation|42P01|PGRST/i.test(e.message)) showSqlHelp(); }
+
+async function loadMaestros(){
+  try{
+    const r = await supaFetch('/rest/v1/maestros?select=tipo,data&order=created_at');
+    if(!r.ok) throw new Error(await r.text());
+    const rows = await r.json();
+    MAES.transp = rows.filter(x=>x.tipo==='transp').map(x=>x.data);
+    MAES.rutas  = rows.filter(x=>x.tipo==='ruta').map(x=>x.data);
+    maesErr = false;
+  }catch(e){ maesErr = true; }
+  const b = R$('btn-sql'); if(b) b.style.display = maesErr ? 'inline-flex' : 'none';
+  if(rmap) rutasRender();
+}
+async function saveMaestro(tipo, o){
+  const r = await supaFetch('/rest/v1/maestros',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{id:o.id,tipo,data:o}])});
+  if(!r.ok) throw new Error(await r.text());
+}
+async function delItem(tipo, id){
+  if(!confirm('¿Eliminar este registro?')) return;
+  try{
+    const r = await supaFetch('/rest/v1/maestros?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
+    if(!r.ok) throw new Error(await r.text());
+    if(tipo==='transp') MAES.transp = MAES.transp.filter(x=>x.id!==id); else MAES.rutas = MAES.rutas.filter(x=>x.id!==id);
+    rutasRender();
+  }catch(e){ maesError(e); }
+}
+
+// ── Geocodificación (OpenStreetMap) y camino (OSRM) ──
+async function geocode(q){
+  const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=cl&q='+encodeURIComponent(q),{headers:{'Accept-Language':'es'}});
+  const j = await r.json();
+  return j[0] ? {lat:+j[0].lat, lng:+j[0].lon} : null;
+}
+async function buildRoute(places){
+  const pts = [];
+  for(let i=0;i<places.length;i++){
+    if(i) await rSleep(1100);
+    const p = await geocode(places[i]+', Chile');
+    if(!p) throw new Error('No encontré: '+places[i]);
+    pts.push({lat:p.lat, lng:p.lng, label:places[i]});
+  }
+  const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.lng+','+p.lat).join(';')}?overview=simplified&geometries=geojson`);
+  const j = await r.json();
+  if(j.code!=='Ok') throw new Error('No se pudo calcular el camino');
+  let g = j.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+  if(g.length>800){ const k=Math.ceil(g.length/800); g = g.filter((_,i)=>i%k===0||i===g.length-1); }
+  return {pts, geom:g, km:Math.round(j.routes[0].distance/1000), horas:+(j.routes[0].duration/3600).toFixed(1)};
+}
+
+// ── Mapa ──
+function rutasShow(){
+  if(!window.L){ toast('⚠️ No cargó el mapa (revisa internet)'); return; }
+  if(!rmap){
+    rmap = L.map('rutas-map');
+    rmap.fitBounds([[-56,-76],[-17.5,-66.5]]);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(rmap);
+    rLayer = L.layerGroup().addTo(rmap);
+    rmap.on('click',e=>{ if(_pick){ const f=_pick; _pick=null; rmap.getContainer().style.cursor=''; f(e.latlng); } });
+    setInterval(()=>{ if(R$('panel-rutas').classList.contains('active')) loadMaestros(); },30000);
+  }
+  setTimeout(()=>{ rmap.invalidateSize(); rutasRender(); },60);
+}
+function rutasRender(){
+  if(!rmap) return;
+  rLayer.clearLayers();
+  const ic = e => L.divIcon({className:'',html:`<div class="mk">${e}</div>`,iconSize:[26,26],iconAnchor:[13,24]});
+  const col = {'PROGRAMADA':'#f59e0b','EN RUTA':'#38bdf8','ENTREGADA':'#22c55e'};
+  MAES.transp.forEach(t=>{ if(t.lat!=null) L.marker([t.lat,t.lng],{icon:ic('🏢')}).bindPopup(`<b>${escH(t.nombre)}</b><br>${escH(t.dir||'')} ${escH(t.com||'')}${t.tel?'<br>📞 '+escH(t.tel):''}${t.contacto?'<br>👤 '+escH(t.contacto):''}`).addTo(rLayer); });
+  MAES.rutas.forEach(r=>{
+    if(r.geom&&r.geom.length) L.polyline(r.geom,{color:col[r.estado]||'#38bdf8',weight:4,opacity:.85}).bindPopup(`<b>${escH(r.nombre)}</b><br>${r.km||'?'} km · ${r.horas||'?'} h`).addTo(rLayer);
+    (r.pts||[]).forEach((p,i,a)=>L.marker([p.lat,p.lng],{icon:ic(i===0?'🟢':i===a.length-1?'🏁':'📍')}).bindPopup(escH(p.label||'')).addTo(rLayer));
+    if(r.pos) L.marker([r.pos.lat,r.pos.lng],{icon:ic('🚚'),zIndexOffset:1000}).bindPopup(`<b>${escH(r.nombre)}</b><br>Actualizado ${rel(r.pos.t)}`).addTo(rLayer);
+  });
+  const empty = t => `<div style="color:rgba(255,255,255,.5);font-size:.85em">${t}</div>`;
+  R$('transp-list').innerHTML = MAES.transp.map(t=>`<div class="r-item" onclick="focusT('${t.id}')"><b>🏢 ${escH(t.nombre)}</b>
+    <small>${escH(t.dir||'')} ${escH(t.com||'')}${t.lat==null?' · ⚠️ sin ubicación':''}</small><small>${escH(t.tel||'')} ${escH(t.contacto||'')}</small>
+    <div class="r-act"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTranspModal('${t.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delItem('transp','${t.id}')">🗑</button></div></div>`).join('') || empty('Sin transportistas todavía');
+  R$('rutas-list').innerHTML = MAES.rutas.map(r=>`<div class="r-item" onclick="focusR('${r.id}')"><b>🛣️ ${escH(r.nombre)}</b><span class="r-badge" style="color:${col[r.estado]||'#fff'}">${escH(r.estado||'')}</span>
+    <small>${escH(transpName(r.transpId)||'Sin transportista')}${r.km?` · ${r.km} km · ${r.horas} h`:' · ⚠️ sin camino calculado'}</small>
+    <small>📦 ${despachos.filter(d=>d.rutaId===r.id).length} despacho(s)${r.pos?` · 🚚 ${rel(r.pos.t)}`:''}</small>
+    <div class="r-act"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openRutaModal('${r.id}')">✏️ Editar</button>
+    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleShare('${r.id}')">${_shareId===r.id?'⏹ Dejar de compartir':'📡 Compartir mi ubicación'}</button>
+    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delItem('ruta','${r.id}')">🗑</button></div></div>`).join('') || empty('Sin rutas todavía');
+}
+function focusT(id){ const t=MAES.transp.find(x=>x.id===id); if(t&&t.lat!=null) rmap.setView([t.lat,t.lng],12); }
+function focusR(id){ const r=MAES.rutas.find(x=>x.id===id); if(r&&r.geom&&r.geom.length) rmap.fitBounds(L.polyline(r.geom).getBounds(),{padding:[30,30]}); }
+
+// ── Transportistas ──
+function openTranspModal(id){
+  _editT = id||null; _pickedT = null;
+  const t = id ? MAES.transp.find(x=>x.id===id) : null;
+  R$('tp-title').textContent = t ? '✏️ Editar transportista' : '🏢 Nuevo transportista';
+  R$('tp-nombre').value=t?.nombre||''; R$('tp-dir').value=t?.dir||''; R$('tp-com').value=t?.com||''; R$('tp-tel').value=t?.tel||''; R$('tp-cont').value=t?.contacto||'';
+  R$('tp-pick').textContent = 'La ubicación se busca sola desde la dirección.';
+  R$('modal-transp').classList.add('open');
+}
+function pickOnMap(){
+  R$('modal-transp').classList.remove('open');
+  rmap.getContainer().style.cursor = 'crosshair';
+  toast('📍 Toca el mapa para marcar la ubicación');
+  _pick = ll => { _pickedT = ll; R$('tp-pick').textContent = '✅ Ubicación marcada en el mapa'; R$('modal-transp').classList.add('open'); };
+}
+async function saveTransp(){
+  const g = i => R$(i).value.trim();
+  if(!g('tp-nombre')){ toast('⚠️ Falta el nombre'); return; }
+  const old = _editT ? MAES.transp.find(x=>x.id===_editT) : null;
+  const t = {id:_editT||'tr_'+Date.now(), nombre:g('tp-nombre'), dir:g('tp-dir'), com:g('tp-com'), tel:g('tp-tel'), contacto:g('tp-cont'), lat:old?old.lat:null, lng:old?old.lng:null};
+  if(_pickedT){ t.lat=_pickedT.lat; t.lng=_pickedT.lng; }
+  else if(t.dir && (!old || old.dir!==t.dir || old.com!==t.com || old.lat==null)){
+    showLoading('Buscando dirección…');
+    try{ const p = await geocode(`${t.dir}, ${t.com}, Chile`); if(p){ t.lat=p.lat; t.lng=p.lng; } else toast('⚠️ No encontré la dirección, usa "Ubicar en el mapa"'); }catch(e){}
+    hideLoading();
+  }
+  try{
+    await saveMaestro('transp', t);
+    const i = MAES.transp.findIndex(x=>x.id===t.id); if(i>=0) MAES.transp[i]=t; else MAES.transp.push(t);
+    closeM('modal-transp'); rutasRender(); if(t.lat!=null) focusT(t.id);
+  }catch(e){ maesError(e); }
+}
+
+// ── Rutas ──
+function openRutaModal(id){
+  _editR = id||null;
+  const r = id ? MAES.rutas.find(x=>x.id===id) : null;
+  R$('ru-title').textContent = r ? '✏️ Editar ruta' : '🛣️ Nueva ruta';
+  R$('ru-transp').innerHTML = '<option value="">— Sin transportista —</option>' + MAES.transp.map(t=>`<option value="${t.id}">${escH(t.nombre)}</option>`).join('');
+  R$('ru-transp').value=r?.transpId||''; R$('ru-nombre').value=r?.nombre||''; R$('ru-origen').value=r?.origen||''; R$('ru-destino').value=r?.destino||'';
+  R$('ru-paradas').value=(r?.paradas||[]).join('\n'); R$('ru-estado').value=r?.estado||'PROGRAMADA'; R$('ru-salida').value=r?.salida||'';
+  R$('modal-ruta').classList.add('open');
+}
+async function saveRuta(){
+  const g = i => R$(i).value.trim();
+  if(!g('ru-nombre')||!g('ru-origen')||!g('ru-destino')){ toast('⚠️ Falta nombre, origen o destino'); return; }
+  const old = _editR ? MAES.rutas.find(x=>x.id===_editR) : null;
+  const paradas = g('ru-paradas').split('\n').map(x=>x.trim()).filter(Boolean);
+  const r = {id:_editR||'ru_'+Date.now(), nombre:g('ru-nombre'), transpId:g('ru-transp'), origen:g('ru-origen'), destino:g('ru-destino'), paradas,
+    estado:R$('ru-estado').value, salida:R$('ru-salida').value, pts:old?.pts||[], geom:old?.geom||[], km:old?.km, horas:old?.horas, pos:old?.pos||null, key:old?.key||''};
+  const key = [r.origen,...paradas,r.destino].join('|');
+  if(key!==r.key || !r.geom.length){
+    showLoading('Calculando ruta…');
+    try{ Object.assign(r, await buildRoute([r.origen,...paradas,r.destino]), {key}); }catch(e){ toast('⚠️ '+e.message); }
+    hideLoading();
+  }
+  try{
+    await saveMaestro('ruta', r);
+    const i = MAES.rutas.findIndex(x=>x.id===r.id); if(i>=0) MAES.rutas[i]=r; else MAES.rutas.push(r);
+    closeM('modal-ruta'); rutasRender(); focusR(r.id);
+  }catch(e){ maesError(e); }
+}
+
+// ── Seguimiento: el celular del conductor comparte su ubicación ──
+function toggleShare(id){
+  if(_geoWatch!=null){ navigator.geolocation.clearWatch(_geoWatch); _geoWatch=null; _shareId=null; toast('📡 Dejaste de compartir'); rutasRender(); return; }
+  if(!navigator.geolocation){ toast('⚠️ Este equipo no tiene GPS'); return; }
+  _shareId = id; let last = 0;
+  _geoWatch = navigator.geolocation.watchPosition(async p=>{
+    if(Date.now()-last<20000) return; last = Date.now();
+    const r = MAES.rutas.find(x=>x.id===id); if(!r) return;
+    r.pos = {lat:p.coords.latitude, lng:p.coords.longitude, t:Date.now()};
+    if(r.estado==='PROGRAMADA') r.estado='EN RUTA';
+    try{ await saveMaestro('ruta', r); }catch(e){}
+    rutasRender();
+  },()=>toast('⚠️ No se pudo leer el GPS'),{enableHighAccuracy:true});
+  toast('📡 Compartiendo ubicación (mantén la app abierta)'); rutasRender();
+}
+
+// ── Formulario de despacho: transportista y ruta ──
+function fillTranspForm(d){
+  const st = R$('d-transp');
+  st.innerHTML = '<option value="">— Sin asignar —</option>' + MAES.transp.map(t=>`<option value="${t.id}">${escH(t.nombre)}</option>`).join('');
+  st.value = d?.transpId||'';
+  fillRutaSel(d?.rutaId||'');
+}
+function fillRutaSel(sel){
+  const t = R$('d-transp').value, sr = R$('d-ruta');
+  sr.innerHTML = '<option value="">— Sin ruta —</option>' + MAES.rutas.filter(r=>!t||r.transpId===t).map(r=>`<option value="${r.id}">${escH(r.nombre)}</option>`).join('');
+  sr.value = sel||'';
 }
 
 startApp();
@@ -1630,13 +1930,14 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 // ══════════════════════════════════════════════
 function switchTab(tab){
   document.getElementById('sidebar').classList.remove('open');
-  ['despachos','dashboard','cubicacion'].forEach(t=>{
+  ['despachos','dashboard','cubicacion','rutas'].forEach(t=>{
     document.getElementById('panel-'+t).classList.toggle('active', t===tab);
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
   });
   document.getElementById('despachos-actions').style.display = tab==='despachos' ? 'flex' : 'none';
   if(tab==='dashboard'){ fillDashFilters(); renderDashboard(); }
   if(tab==='cubicacion' && typeof kick3D==='function') kick3D();
+  if(tab==='rutas') rutasShow();
 }
 
 // ══════════════════════════════════════════════
