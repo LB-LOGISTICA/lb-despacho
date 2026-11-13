@@ -1168,7 +1168,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v6';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v7';
   init();
 }
 async function doLogin(){
@@ -2754,7 +2754,7 @@ let cubo3d = null, _c3anim = null, _c3ang = 0.6, _c3drag = false;
 function setup3D(pal, pro, layout, porCapa, porPallet, totalPallets, resto, altMM){
   const sel = document.getElementById('pal3d-sel');
   sel.innerHTML = Array.from({length:totalPallets},(_,i)=>{ const u=(i===totalPallets-1&&resto>0)?resto:porPallet; return `<option value="${u}">Pallet ${i+1} · ${u} uds</option>`; }).join('');
-  cubo3d = {pal, pro, pieces:layoutPieces(pal,pro,layout), porCapa, altMM, units:+sel.value};
+  cubo3d = {pal, pro, pieces:layoutPieces(pal,pro,layout), porCapa, altMM, units:+sel.value, caja:layout.tipo==='cuadrado'};
   sel.onchange = ()=>{ cubo3d.units = +sel.value; };
   kick3D();
 }
@@ -2775,7 +2775,9 @@ function loop3D(){
 function render3D(cv){
   const {pal,pro,pieces,porCapa,altMM,units} = cubo3d, ctx = cv.getContext('2d'), CW = cv.width, CH = cv.height;
   ctx.clearRect(0,0,CW,CH);
-  const baseH = PALLET_BASE_H*10, layers = Math.ceil(units/porCapa), rem = units%porCapa, H = baseH+layers*altMM;
+  const baseH = PALLET_BASE_H*10, layers = Math.ceil(units/porCapa), rem = units%porCapa;
+  const nB = Math.ceil(300/altMM), bTop = Math.max(nB-1,layers-3), b0 = Math.max(0,bTop-nB+1), cajaP = cubo3d.caja ? pieces[0] : null;
+  const H = Math.max(baseH+layers*altMM, cajaP ? baseH+b0*altMM+300 : 0);
   const c = Math.cos(_c3ang), s = Math.sin(_c3ang), cp = Math.cos(.5), sp = Math.sin(.5);
   const R = Math.hypot(pal.w,pal.l)/2, sc = Math.min(CW*.62/(2*R), (CH-60)/(H*cp+2*R*sp));
   const cx = CW/2-10, cy = CH/2-8+sc*H*cp/2;
@@ -2796,9 +2798,16 @@ function render3D(cv){
   };
   box(0,0,0,pal.w,pal.l,baseH,'#8b5a2b');
   for(let l=0;l<layers;l++){
-    const z0 = baseH+l*altMM, list = (l===layers-1&&rem) ? pieces.slice(0,rem) : pieces;
-    list.map(p=>({p,d:P(p.x+p.w/2,p.y+p.l/2,0)[2]})).sort((a,b)=>b.d-a.d)
-      .forEach(o=>box(o.p.x+1,o.p.y+1,z0,o.p.x+o.p.w-1,o.p.y+o.p.l-1,z0+altMM,o.p.rot?'#38bdf8':'#2e9e7a'));
+    const z0 = baseH+l*altMM, enCaja = cajaP && l>=b0 && l<b0+nB;
+    let list = (l===layers-1&&rem) ? pieces.slice(0,rem) : pieces;
+    if(enCaja) list = list.filter(p=>p!==cajaP);
+    const items = list.map(p=>({p,k:0}));
+    if(enCaja) items.push({p:cajaP,k:1});
+    items.map(o=>({o,d:P(o.p.x+o.p.w/2,o.p.y+o.p.l/2,0)[2]})).sort((a,b)=>b.d-a.d).forEach(({o})=>{
+      const p = o.p;
+      if(o.k){ const zb = baseH+b0*altMM, m = (p.w-300)/2, n = (p.l-300)/2; box(p.x+m,p.y+n,zb,p.x+m+300,p.y+n+300,zb+300,'#f59e0b'); }
+      else box(p.x+1,p.y+1,z0,p.x+p.w-1,p.y+p.l-1,z0+altMM,p.rot?'#38bdf8':'#2e9e7a');
+    });
   }
   const lx = cx+sc*R+16, y0 = cy, y1 = cy-sc*H*cp;
   ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1; ctx.beginPath();
@@ -2806,7 +2815,7 @@ function render3D(cv){
   ctx.fillStyle='#fff'; ctx.font='bold 13px Segoe UI'; ctx.textAlign='left'; ctx.textBaseline='middle';
   ctx.fillText(+(H/10).toFixed(1)+' cm', lx+7, (y0+y1)/2);
   ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='11px Segoe UI';
-  ctx.fillText(`${layers} capas · ${units} uds · ${altMM} mm c/u`, CW/2, CH-10);
+  ctx.fillText(`${layers} capas · ${units} uds · ${altMM} mm c/u${cajaP?' · + caja 30×30×30 cm':''}`, CW/2, CH-10);
 }
 
 // ── (antiguo) Dibujar 3D según layout ──
