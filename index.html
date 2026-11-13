@@ -233,6 +233,29 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
 #transp-list .r-item,#rutas-list .r-item{margin-bottom:0;}
 #rutas-list{display:flex;flex-direction:column;gap:8px;}
 @media(max-width:860px){.rutas-grid{grid-template-columns:1fr!important;}}
+
+#cub-sub{display:none;flex-direction:column;gap:6px;padding-left:12px;}
+#cub-sub .nav-tab{font-size:.88em;padding:9px 12px;}
+#cubo-qty{min-width:0;width:100%;box-sizing:border-box;}
+#panel-cubicacion .chart-card,#cubo-results-panel{min-width:0;}
+#panel-cubicacion button[onclick^="adjQty"]{flex-shrink:0;}
+#cubo-vistas-row{align-items:start;}
+.cj-in{width:100%;min-width:0;box-sizing:border-box;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:#fff;font-size:.95em;outline:none;font-family:inherit;}
+.cj-in option{color:#000;}
+.cj-lb{display:block;color:rgba(255,255,255,.6);font-size:.72em;font-weight:700;text-transform:uppercase;margin-bottom:5px;}
+.cj-row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.cj-row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.cj-chip{padding:7px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-size:.9em;}
+.cj-chip.on,.cj-opt.on{border-color:var(--accent);background:rgba(46,158,122,.25);}
+.cj-opt{border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);color:#fff;font-weight:700;font-size:.9em;}
+.cj-opt small{display:block;font-weight:400;opacity:.55;font-size:.78em;}
+.cj-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 24px;}
+.cj-sum div{color:rgba(255,255,255,.72);font-size:.9em;}
+.cj-sum b{color:#fff;}
+.cj-msg{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.9em;}
+.cj-msg.good{background:rgba(46,158,122,.2);color:#a8e6c8;}
+.cj-msg.bad{background:rgba(239,68,68,.2);color:#fecaca;}
+@media(max-width:860px){.cj-grid,.cj-views{grid-template-columns:1fr!important;}}
 </style>
 </head>
 <body class="locked">
@@ -261,7 +284,11 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
   </div>
   <button class="nav-tab active" id="tab-despachos" onclick="switchTab('despachos')">🚚 Despachos</button>
   <button class="nav-tab" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
-  <button class="nav-tab" id="tab-cubicacion" onclick="switchTab('cubicacion')">📦 Cubicación</button>
+  <button class="nav-tab" id="tab-cubmenu" onclick="cubMenu()">📦 Cubicación <span id="cub-caret" style="float:right">▾</span></button>
+  <div id="cub-sub">
+    <button class="nav-tab" id="tab-cubicacion" onclick="switchTab('cubicacion')">🪵 Cubicación paneles</button>
+    <button class="nav-tab" id="tab-cajones" onclick="switchTab('cajones')">🧰 Cubicación cajones</button>
+  </div>
   <button class="nav-tab" id="tab-rutas" onclick="switchTab('rutas')">🗺️ Rutas</button>
   <div class="sb-spacer"></div>
   <button class="btn sb-btn" onclick="abrirDiagnosticoFechas()">🔍 Diagnóstico de fechas</button>
@@ -657,7 +684,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
 
   <div class="top-bar">
     <div>
-      <div class="page-title">📦 <span>Cubicación de Pallets</span></div>
+      <div class="page-title">🪵 <span>Cubicación paneles</span></div>
       <div style="font-size:.8em;color:rgba(255,255,255,.65);margin-top:3px">Calcula automáticamente la distribución de productos en pallet</div>
     </div>
   </div>
@@ -856,6 +883,75 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
 
   </div>
 </div><!-- /panel-cubicacion -->
+
+<!-- ══ CUBICACIÓN CAJONES ══ -->
+<div class="view-panel" id="panel-cajones">
+  <div class="top-bar">
+    <div>
+      <div class="page-title">🧰 <span>Cubicación cajones</span></div>
+      <div style="font-size:.8em;color:rgba(255,255,255,.65);margin-top:3px">Cajón a medida: medidas interiores, holgura, paneles y cajas de 30×30×30</div>
+    </div>
+  </div>
+  <div class="cj-grid" style="display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:20px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="chart-card">
+        <div class="chart-card-title">📏 Medidas interiores del cajón</div>
+        <div class="cj-row3">
+          <div><label class="cj-lb">Largo (cm)</label><input class="cj-in" id="cj-L" type="number" min="1" step="any" oninput="cjRead()"></div>
+          <div><label class="cj-lb">Ancho (cm)</label><input class="cj-in" id="cj-A" type="number" min="1" step="any" oninput="cjRead()"></div>
+          <div><label class="cj-lb">Alto (cm)</label><input class="cj-in" id="cj-H" type="number" min="1" step="any" oninput="cjRead()"></div>
+        </div>
+        <div class="cj-row2" style="margin-top:12px">
+          <div><label class="cj-lb">Holgura por lado (cm)</label><input class="cj-in" id="cj-hol" type="number" min="0" step="any" oninput="cjRead()"></div>
+          <div><label class="cj-lb">Holgura alto (cm)</label><input class="cj-in" id="cj-holh" type="number" min="0" step="any" oninput="cjRead()"></div>
+        </div>
+        <div style="font-size:.74em;color:rgba(255,255,255,.45);margin-top:6px">La holgura por lado se descuenta del largo y del ancho (a cada lado).</div>
+        <div id="cj-util" style="margin-top:10px;font-weight:700;color:#a8e6c8;font-size:.9em"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">📐 Paneles</div>
+        <div class="cj-row2" style="margin-bottom:14px">
+          <div class="cj-opt" id="cj-p-305x305" onclick="cjSetProd('305x305')">305 × 305<small>mm (ancho × largo)</small></div>
+          <div class="cj-opt" id="cj-p-305x610" onclick="cjSetProd('305x610')">305 × 610<small>mm (ancho × largo)</small></div>
+        </div>
+        <label class="cj-lb">Altura del panel</label>
+        <div id="cj-alt-opts" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+          <span style="color:rgba(255,255,255,.5);font-size:.8em">Otra altura (mm):</span>
+          <input class="cj-in" id="cj-alt-custom" type="number" min="1" style="width:90px" oninput="cjAltCustom(this.value)">
+        </div>
+        <label class="cj-lb" style="margin-top:14px">Cantidad de paneles</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="cj-chip" style="flex-shrink:0" onclick="cjAdj(-10)">−</button>
+          <input class="cj-in" id="cj-qty" type="number" min="0" style="text-align:center;font-size:1.4em;font-weight:700" oninput="cjRead()">
+          <button class="cj-chip" style="flex-shrink:0" onclick="cjAdj(10)">+</button>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">📦 Cajas</div>
+        <div class="cj-row2">
+          <div><label class="cj-lb">Cantidad de cajas</label><input class="cj-in" id="cj-bn" type="number" min="0" oninput="cjRead()"></div>
+          <div><label class="cj-lb">Ubicación</label>
+            <select class="cj-in" id="cj-bmode" onchange="cjRead()"><option value="arriba">Encima de los paneles</option><option value="fondo">Al fondo del cajón</option></select></div>
+        </div>
+        <div class="cj-row3" style="margin-top:12px">
+          <div><label class="cj-lb">Largo (cm)</label><input class="cj-in" id="cj-bl" type="number" min="1" step="any" oninput="cjRead()"></div>
+          <div><label class="cj-lb">Ancho (cm)</label><input class="cj-in" id="cj-bw" type="number" min="1" step="any" oninput="cjRead()"></div>
+          <div><label class="cj-lb">Alto (cm)</label><input class="cj-in" id="cj-bh" type="number" min="1" step="any" oninput="cjRead()"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="chart-card"><div class="chart-card-title">📊 Resumen del cajón</div><div id="cj-resumen"></div></div>
+      <div class="cj-views" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
+        <div class="chart-card" style="min-width:0"><div class="chart-card-title">🎲 Vista 3D (arrastra para girar)</div>
+          <div style="display:flex;justify-content:center"><canvas id="cj-3d" width="420" height="400" style="border-radius:8px;max-width:100%;touch-action:pan-y;cursor:grab"></canvas></div></div>
+        <div class="chart-card" style="min-width:0"><div class="chart-card-title">🔭 Vista superior — primera capa</div>
+          <div style="display:flex;justify-content:center"><canvas id="cj-top" width="360" height="360" style="max-width:100%"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ RUTAS VIEW ══ -->
 <div class="view-panel" id="panel-rutas">
@@ -1168,7 +1264,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v8';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v9';
   init();
 }
 async function doLogin(){
@@ -1923,7 +2019,7 @@ function respaldoExcel(){
 
   // Info
   add('Info', aoaSheet([['Respaldo — Sistema despachos LB'],['Fecha',now.toLocaleString('es-CL')],['Usuario',session?session.email:''],[],
-    ['Hoja','Contenido'],['Despachos',despachos.length+' registros'],['Dashboard','Resumen y totales'],['Cubicación','Último cálculo realizado'],
+    ['Hoja','Contenido'],['Despachos',despachos.length+' registros'],['Dashboard','Resumen y totales'],['Cubicación paneles','Último cálculo realizado'],['Cubicación cajones','Configuración y resultado actuales'],
     ['Transportistas',MAES.transp.length+' registros'],['Rutas',MAES.rutas.length+' registros'],['Despachos por ruta','Despachos con transporte asignado']]));
 
   // Despachos
@@ -1954,7 +2050,8 @@ function respaldoExcel(){
     cub.push([]);
     R$('cubo-tabla').querySelectorAll('tr').forEach(tr=>cub.push([...tr.children].map(c=>c.textContent.replace(/\s+/g,' ').trim())));
   } else cub.push(['Aún no se ha realizado un cálculo de cubicación en esta sesión']);
-  add('Cubicación', aoaSheet(cub));
+  add('Cubicación paneles', aoaSheet(cub));
+  add('Cubicación cajones', cajonSheet());
 
   // Rutas
   const vacioM = maesErr ? 'Tabla "maestros" no configurada en Supabase' : 'Sin registros';
@@ -1968,6 +2065,186 @@ function respaldoExcel(){
 
   XLSX.writeFile(wb, `Respaldo_DespachosLB_${stamp}.xlsx`);
   toast('✅ Respaldo descargado (' + wb.SheetNames.length + ' hojas)');
+}
+
+// ══════════════════════════════════════════════
+//  CUBICACIÓN CAJONES
+// ══════════════════════════════════════════════
+function cubMenu(open){
+  const sub = R$('cub-sub'), o = open===undefined ? getComputedStyle(sub).display==='none' : open;
+  sub.style.display = o ? 'flex' : 'none'; R$('cub-caret').textContent = o ? '▴' : '▾';
+}
+const CJ_DEF = {L:100,A:100,H:100,hol:2,holh:0,prod:'305x305',alt:30,qty:100,bn:1,bmode:'arriba',bl:30,bw:30,bh:30};
+let CJ = Object.assign({}, CJ_DEF), cjView = null;
+try{ Object.assign(CJ, JSON.parse(localStorage.getItem('lbd_cj')||'{}')); }catch(e){}
+const CJ_ALTS = [30,36,40,50,60,65,70,80];
+const CJ_IDS = {L:'cj-L',A:'cj-A',H:'cj-H',hol:'cj-hol',holh:'cj-holh',qty:'cj-qty',bn:'cj-bn',bl:'cj-bl',bw:'cj-bw',bh:'cj-bh'};
+
+function makeView(cv){
+  const v = {cv, center:.3, drag:false, anim:null, scene:null}; let lx = 0;
+  cv.addEventListener('pointerdown',e=>{ v.drag=true; lx=e.clientX; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove',e=>{ if(v.drag){ v.center += (e.clientX-lx)*.01; lx=e.clientX; } });
+  ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{ v.drag=false; }));
+  return v;
+}
+function kickView(v){
+  if(!v || !v.scene || v.anim) return;
+  const f = ()=>{
+    if(!v.scene || v.cv.offsetParent===null){ v.anim=null; return; }
+    if(!v.drag && !matchMedia('(prefers-reduced-motion: reduce)').matches) v.center += .008;
+    drawScene(v.cv, v.scene, v.center); v.anim = requestAnimationFrame(f);
+  };
+  v.anim = requestAnimationFrame(f);
+}
+function paintBox(ctx,P,s,c,x0,y0,z0,x1,y1,z1,col){
+  const Fs = [[null,[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]]],[[-1,0],[[x0,y0,z0],[x0,y1,z0],[x0,y1,z1],[x0,y0,z1]]],
+    [[1,0],[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]]],[[0,-1],[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]]],[[0,1],[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]]]];
+  Fs.forEach(([n,pts])=>{
+    let f;
+    if(n){ const nyr=n[0]*s+n[1]*c; if(nyr>=0) return; const nxr=n[0]*c-n[1]*s; f=mix(col,'#000000',Math.min(.6,Math.max(.1,.42-.3*(-.6*nxr-.8*nyr)))); }
+    else f = mix(col,'#ffffff',.12);
+    ctx.beginPath(); pts.forEach((q,i)=>{ const p=P(q[0],q[1],q[2]); i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); });
+    ctx.closePath(); ctx.fillStyle=f; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=.8; ctx.stroke();
+  });
+}
+function drawScene(cv, sc, ang){
+  const ctx = cv.getContext('2d'), CW = cv.width, CH = cv.height; ctx.clearRect(0,0,CW,CH);
+  const c = Math.cos(ang), s = Math.sin(ang), cp = Math.cos(.5), sp = Math.sin(.5), H = sc.Hint, R = Math.hypot(sc.W,sc.L)/2;
+  const top = Math.max(H, ...sc.boxes.map(b=>b.z1));
+  const k = Math.min(CW*.62/(2*R), (CH-60)/(top*cp+2*R*sp)), cx = CW/2-10, cy = CH/2-8+k*top*cp/2;
+  const P = (x,y,z)=>{ const X=x-sc.W/2, Y=y-sc.L/2, yr=X*s+Y*c; return [cx+k*(X*c-Y*s), cy-k*(z*cp+yr*sp), yr]; };
+  const poly = (pts,fill,stroke)=>{
+    ctx.beginPath(); pts.forEach((q,i)=>{ const p=P(q[0],q[1],q[2]); i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); });
+    ctx.closePath(); if(fill){ ctx.fillStyle=fill; ctx.fill(); } if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.stroke(); }
+  };
+  poly([[0,0,0],[sc.W,0,0],[sc.W,sc.L,0],[0,sc.L,0]],'rgba(139,90,43,.5)','rgba(255,255,255,.5)');
+  const dep = b=>{ const q=P((b.x0+b.x1)/2,(b.y0+b.y1)/2,0); return q[2]*cp-((b.z0+b.z1)/2)*sp; };
+  sc.boxes.map(b=>({b,d:dep(b)})).sort((a,b)=>b.d-a.d).forEach(o=>{ const b=o.b; paintBox(ctx,P,s,c,b.x0+.8,b.y0+.8,b.z0,b.x1-.8,b.y1-.8,b.z1,b.c); });
+  ctx.setLineDash([5,4]);
+  const E = [[0,0],[sc.W,0],[sc.W,sc.L],[0,sc.L]];
+  E.forEach((a,i)=>{ const b=E[(i+1)%4]; poly([[a[0],a[1],H],[b[0],b[1],H]],null,'rgba(255,255,255,.4)'); poly([[a[0],a[1],0],[a[0],a[1],H]],null,'rgba(255,255,255,.4)'); });
+  ctx.setLineDash([]);
+  const lx = cx+k*R+16, y0 = cy, y1 = cy-k*H*cp;
+  ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1; ctx.beginPath();
+  ctx.moveTo(lx,y0); ctx.lineTo(lx,y1); ctx.moveTo(lx-4,y0); ctx.lineTo(lx+4,y0); ctx.moveTo(lx-4,y1); ctx.lineTo(lx+4,y1); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 13px Segoe UI'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText(sc.dim, lx+7, (y0+y1)/2);
+  ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='11px Segoe UI'; ctx.fillText(sc.cap, CW/2, CH-10);
+}
+
+function cjInit(){
+  if(cjView) return;
+  R$('cj-alt-opts').innerHTML = CJ_ALTS.map(a=>`<button class="cj-chip" id="cj-alt-${a}" onclick="cjSetAlt(${a})">${a} mm</button>`).join('');
+  Object.keys(CJ_IDS).forEach(k=>{ R$(CJ_IDS[k]).value = CJ[k]; });
+  R$('cj-bmode').value = CJ.bmode;
+  if(CJ_ALTS.indexOf(CJ.alt)<0) R$('cj-alt-custom').value = CJ.alt;
+  cjView = makeView(R$('cj-3d'));
+}
+function cjShow(){ cjInit(); calcCajon(); kickView(cjView); }
+function cjRead(){
+  const n = (id,d)=>{ const v=parseFloat(R$(id).value); return isFinite(v)&&v>=0 ? v : d; };
+  ['L','A','H','hol','holh','bl','bw','bh'].forEach(k=>{ CJ[k] = n(CJ_IDS[k],0); });
+  CJ.qty = Math.floor(n('cj-qty',0)); CJ.bn = Math.floor(n('cj-bn',0)); CJ.bmode = R$('cj-bmode').value;
+  try{ localStorage.setItem('lbd_cj',JSON.stringify(CJ)); }catch(e){}
+  calcCajon(); kickView(cjView);
+}
+function cjSetProd(p){ CJ.prod = p; cjRead(); }
+function cjSetAlt(a){ CJ.alt = a; R$('cj-alt-custom').value = ''; cjRead(); }
+function cjAltCustom(v){ const a=parseFloat(v); if(a>0) CJ.alt = a; cjRead(); }
+function cjAdj(d){ R$('cj-qty').value = Math.max(0,(parseInt(R$('cj-qty').value)||0)+d); cjRead(); }
+
+function cjFitLayer(Wu, Lu, prod){
+  const grid = (w,l,rot)=>{ const nx=Math.floor(Wu/w), ny=Math.floor(Lu/l), a=[]; for(let i=0;i<nx;i++) for(let j=0;j<ny;j++) a.push({x:i*w,y:j*l,w:w,l:l,rot:rot}); return a; };
+  const big = prod==='305x610';
+  let best = {p:grid(305,big?610:305,0), n:big?'Alineado (largo del panel a lo largo del cajón)':'Cuadrícula'};
+  if(big){
+    const B = grid(610,305,1); if(B.length>best.p.length) best = {p:B, n:'Girado 90°'};
+    const nx=Math.floor(Wu/915), ny=Math.floor(Lu/915), M=[];
+    for(let i=0;i<nx;i++) for(let j=0;j<ny;j++){ const x=i*915, y=j*915;
+      M.push({x:x,y:y,w:305,l:610,rot:0},{x:x+305,y:y,w:610,l:305,rot:1},{x:x+610,y:y+305,w:305,l:610,rot:0},{x:x,y:y+610,w:610,l:305,rot:1}); }
+    if(M.length>best.p.length) best = {p:M, n:'Molino 4 uds (cuadro central libre)'};
+  }
+  if(best.p.length){
+    const mx=Math.max(...best.p.map(q=>q.x+q.w)), my=Math.max(...best.p.map(q=>q.y+q.l)), ox=(Wu-mx)/2, oy=(Lu-my)/2;
+    best.p.forEach(q=>{ q.x+=ox; q.y+=oy; });
+  }
+  return best;
+}
+function calcCajon(){
+  const mm = v=>v*10, hol = mm(CJ.hol), holh = mm(CJ.holh);
+  const W = mm(CJ.A), L = mm(CJ.L), H = mm(CJ.H), Wu = W-2*hol, Lu0 = L-2*hol, Hu = H-holh, alt = CJ.alt;
+  R$('cj-util').textContent = `Útil para paneles: ${(Lu0/10).toFixed(1)} × ${(Wu/10).toFixed(1)} × ${(Hu/10).toFixed(1)} cm (largo × ancho × alto)`;
+  document.querySelectorAll('.cj-chip[id^="cj-alt-"]').forEach(b=>b.classList.toggle('on', b.id==='cj-alt-'+alt));
+  ['305x305','305x610'].forEach(p=>R$('cj-p-'+p).classList.toggle('on', CJ.prod===p));
+  const res = R$('cj-resumen');
+  if(Wu<=0||Lu0<=0||Hu<=0||alt<=0){
+    res.innerHTML = '<div class="cj-msg bad">⚠️ Revisa las medidas: no queda espacio útil dentro del cajón</div>';
+    if(cjView) cjView.scene = null;
+    ['cj-3d','cj-top'].forEach(id=>{ const c=R$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); });
+    return;
+  }
+  const bl = mm(CJ.bl), bw = mm(CJ.bw), bh = mm(CJ.bh); let nb = CJ.bn; const avisos = [];
+  let reserve = 0, Lu = Lu0, boxPer = 0, nx = 0, ny = 0, nz = 0, tiers = 0, rows = 0;
+  if(nb>0 && bl>0 && bw>0 && bh>0){
+    nx = Math.floor(Wu/bw);
+    if(CJ.bmode==='arriba'){ ny=Math.floor(Lu0/bl); boxPer=nx*ny; if(boxPer){ tiers=Math.ceil(nb/boxPer); reserve=tiers*bh; } }
+    else { nz=Math.floor(Hu/bh); boxPer=nx*nz; if(boxPer){ rows=Math.ceil(nb/boxPer); Lu=Lu0-rows*bl; } }
+    if(!boxPer || Lu<=0 || reserve>=Hu){ avisos.push(`Las ${CJ.bn} cajas no caben con esta configuración`); nb=0; reserve=0; Lu=Lu0; tiers=0; rows=0; }
+  } else nb = 0;
+  const fit = cjFitLayer(Wu,Lu,CJ.prod), per = fit.p.length, maxL = Math.floor((Hu-reserve)/alt);
+  const cap = per*maxL, placed = Math.min(CJ.qty,cap), layers = per ? Math.ceil(placed/per) : 0, falta = CJ.qty-placed;
+  const pl = CJ.prod==='305x610' ? 610 : 305;
+  const bx = []; let left = placed;
+  for(let l=0;l<layers;l++){
+    const list = fit.p.slice(0,left); left -= list.length;
+    list.forEach(q=>bx.push({x0:hol+q.x,y0:hol+q.y,z0:l*alt,x1:hol+q.x+q.w,y1:hol+q.y+q.l,z1:(l+1)*alt,c:q.rot?'#38bdf8':'#2e9e7a'}));
+  }
+  const bxs = [];
+  for(let k=0;k<nb;k++){
+    if(CJ.bmode==='arriba'){ const t=Math.floor(k/boxPer), i=k%boxPer, ix=i%nx, iy=Math.floor(i/nx), z=layers*alt+t*bh;
+      bxs.push({x0:hol+ix*bw,y0:hol+iy*bl,z0:z,x1:hol+ix*bw+bw,y1:hol+iy*bl+bl,z1:z+bh,c:'#f59e0b'}); }
+    else { const r=Math.floor(k/boxPer), i=k%boxPer, ix=i%nx, iz=Math.floor(i/nx), y=hol+Lu0-(r+1)*bl;
+      bxs.push({x0:hol+ix*bw,y0:y,z0:iz*bh,x1:hol+ix*bw+bw,y1:y+bl,z1:iz*bh+bh,c:'#f59e0b'}); }
+  }
+  const boxTop = nb ? (CJ.bmode==='arriba' ? layers*alt+tiers*bh : Math.ceil(Math.min(nb,boxPer)/nx)*bh) : 0;
+  const needH = Math.max(layers*alt, boxTop);
+  const occ = (placed*305*pl*alt + nb*bl*bw*bh)/(W*L*H)*100;
+  const L1 = (a,b)=>`<div>${a}: <b>${b}</b></div>`;
+  res.innerHTML = `<div class="cj-sum">` +
+    L1('Interior (largo × ancho × alto)',`${CJ.L} × ${CJ.A} × ${CJ.H} cm`) +
+    L1('Holgura',`${CJ.hol} cm por lado · ${CJ.holh} cm en alto`) +
+    L1('Útil para paneles',`${(Lu/10).toFixed(1)} × ${(Wu/10).toFixed(1)} × ${((Hu-reserve)/10).toFixed(1)} cm`) +
+    L1('Patrón por capa',fit.n) + L1('Paneles por capa',per) + L1('Capas máximas',maxL) + L1('Capacidad de paneles',cap) +
+    L1('Paneles pedidos → ubicados',`${CJ.qty} → ${placed}`) +
+    L1('Capas usadas',`${layers} (${(layers*alt/10).toFixed(1)} cm de paneles)`) +
+    L1('Cajas',`${nb} de ${CJ.bn} · ${CJ.bl}×${CJ.bw}×${CJ.bh} cm · ${CJ.bmode==='arriba'?'encima de los paneles':'al fondo del cajón'}`) +
+    L1('Alto mínimo del cajón',`${((needH+holh)/10).toFixed(1)} cm`) + L1('Ocupación del volumen',`${occ.toFixed(0)}%`) + `</div>` +
+    avisos.map(a=>`<div class="cj-msg bad">⚠️ ${a}</div>`).join('') +
+    (CJ.qty<=0 ? `<div class="cj-msg bad">⚠️ Ingresa la cantidad de paneles</div>`
+      : falta>0 ? `<div class="cj-msg bad">⚠️ Faltan ${falta} paneles: aumenta el alto, el largo o el ancho, o reduce la holgura</div>`
+      : `<div class="cj-msg good">✅ Caben los ${CJ.qty} paneles${nb?` y ${nb} caja(s)`:''} en el cajón</div>`);
+  // vista superior
+  const c = R$('cj-top'), g = c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
+  const m = 28, k = Math.min((c.width-2*m)/W,(c.height-2*m)/L), ox = (c.width-W*k)/2, oy = (c.height-L*k)/2;
+  g.strokeStyle='rgba(255,255,255,.8)'; g.lineWidth=2; g.strokeRect(ox,oy,W*k,L*k);
+  g.setLineDash([4,3]); g.strokeStyle='rgba(255,255,255,.35)'; g.lineWidth=1; g.strokeRect(ox+hol*k,oy+hol*k,Wu*k,Lu0*k); g.setLineDash([]);
+  fit.p.forEach(q=>{ g.fillStyle = q.rot?'#38bdf8':'#2e9e7a'; g.fillRect(ox+(hol+q.x)*k+1,oy+(hol+q.y)*k+1,q.w*k-2,q.l*k-2); });
+  if(bxs.length){ const z0=Math.min(...bxs.map(b=>b.z0)); g.fillStyle='rgba(245,158,11,.88)';
+    bxs.filter(b=>b.z0===z0).forEach(b=>g.fillRect(ox+b.x0*k+1,oy+b.y0*k+1,(b.x1-b.x0)*k-2,(b.y1-b.y0)*k-2)); }
+  g.fillStyle='rgba(255,255,255,.65)'; g.font='11px Segoe UI'; g.textAlign='center'; g.fillText(`Ancho ${CJ.A} cm`,c.width/2,oy-8);
+  g.save(); g.translate(ox-10,c.height/2); g.rotate(-Math.PI/2); g.fillText(`Largo ${CJ.L} cm`,0,0); g.restore();
+  // 3D
+  if(cjView) cjView.scene = {W:W, L:L, Hint:H, boxes:bx.concat(bxs), dim:`${CJ.H} cm`, cap:`${placed} paneles · ${nb} cajas · ${layers} capas`};
+}
+function cajonSheet(){
+  if(!cjView) cjInit();
+  calcCajon();
+  const rows = [['Cubicación de cajones'],[]];
+  R$('cj-resumen').querySelectorAll('.cj-sum div, .cj-msg').forEach(d=>{
+    const t = d.textContent.replace(/\s+/g,' ').trim(), i = t.indexOf(':');
+    rows.push(i>0 && !d.classList.contains('cj-msg') ? [t.slice(0,i), t.slice(i+1).trim()] : [t]);
+  });
+  return aoaSheet(rows);
 }
 
 startApp();
@@ -2056,7 +2333,7 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 // ══════════════════════════════════════════════
 function switchTab(tab){
   document.getElementById('sidebar').classList.remove('open');
-  ['despachos','dashboard','cubicacion','rutas'].forEach(t=>{
+  ['despachos','dashboard','cubicacion','cajones','rutas'].forEach(t=>{
     document.getElementById('panel-'+t).classList.toggle('active', t===tab);
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
   });
@@ -2064,6 +2341,9 @@ function switchTab(tab){
   if(tab==='dashboard'){ fillDashFilters(); renderDashboard(); }
   if(tab==='cubicacion' && typeof kick3D==='function') kick3D();
   if(tab==='rutas') rutasShow();
+  const cm = document.getElementById('tab-cubmenu'); if(cm) cm.classList.toggle('active', tab==='cubicacion'||tab==='cajones');
+  if(tab==='cubicacion'||tab==='cajones') cubMenu(true);
+  if(tab==='cajones') cjShow();
 }
 
 // ══════════════════════════════════════════════
@@ -2766,8 +3046,8 @@ function kick3D(){ if(cubo3d && !_c3anim) _c3anim = requestAnimationFrame(loop3D
 function loop3D(){
   const cv = document.getElementById('canvas-3d-a');
   if(!cubo3d || !cv || cv.offsetParent===null){ _c3anim=null; return; }
-  if(!_c3drag && !matchMedia('(prefers-reduced-motion: reduce)').matches) _c3t += 0.012;
-  _c3ang = _c3center + 0.5*Math.sin(_c3t);
+  if(!_c3drag && !matchMedia('(prefers-reduced-motion: reduce)').matches) _c3center += 0.008;
+  _c3ang = _c3center;
   render3D(cv);
   _c3anim = requestAnimationFrame(loop3D);
 }
