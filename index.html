@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Sistema despachos LB</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#123737">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -159,7 +159,8 @@ input[type="file"]{display:none;}
 
 /* ══ v2: tema, sidebar, login ══ */
 :root{--bg:#0d2b2b;--side:#123737;--accent:#2e9e7a;--accent2:#1a7a50;--acc-l:#a8e6c8;--thead:#1a4d4d;--card:255,255,255;--shade:.55;--blur:0px;}
-body{flex-direction:row!important;height:100vh;height:100dvh;background:var(--bg)!important;}
+html,body{overscroll-behavior:none;}
+body{flex-direction:row!important;height:100vh;height:100dvh;position:fixed;inset:0;width:100%;background:var(--bg)!important;}
 #bg-layer{position:fixed;inset:-20px;z-index:-2;background:var(--bg) center/cover no-repeat;filter:blur(var(--blur));}
 #bg-shade{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:var(--shade);}
 .main-content{background:transparent!important;backdrop-filter:none!important;}
@@ -1271,7 +1272,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v12';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v14';
   init();
 }
 async function doLogin(){
@@ -2103,16 +2104,58 @@ function kickView(v){
   };
   v.anim = requestAnimationFrame(f);
 }
-function paintBox(ctx,P,s,c,x0,y0,z0,x1,y1,z1,col){
+function paintBox(ctx,P,s,c,x0,y0,z0,x1,y1,z1,col,o){
   const Fs = [[null,[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]]],[[-1,0],[[x0,y0,z0],[x0,y1,z0],[x0,y1,z1],[x0,y0,z1]]],
     [[1,0],[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]]],[[0,-1],[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]]],[[0,1],[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]]]];
+  const caja = !!(o && o.box);
   Fs.forEach(([n,pts])=>{
     let f;
     if(n){ const nyr=n[0]*s+n[1]*c; if(nyr>=0) return; const nxr=n[0]*c-n[1]*s; f=mix(col,'#000000',Math.min(.6,Math.max(.1,.42-.3*(-.6*nxr-.8*nyr)))); }
-    else f = mix(col,'#ffffff',.12);
-    ctx.beginPath(); pts.forEach((q,i)=>{ const p=P(q[0],q[1],q[2]); i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); });
-    ctx.closePath(); ctx.fillStyle=f; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=.8; ctx.stroke();
+    else { if(caja && !o.top) return; f = mix(col,'#ffffff',.12); }
+    const q = pts.map(p=>P(p[0],p[1],p[2]));
+    ctx.beginPath(); q.forEach((p,i)=>{ i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); }); ctx.closePath();
+    ctx.fillStyle = f; ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = .8;
+    if(!caja || !n) ctx.stroke();
+    else {
+      ctx.beginPath();
+      ctx.moveTo(q[1][0],q[1][1]); ctx.lineTo(q[2][0],q[2][1]); ctx.moveTo(q[3][0],q[3][1]); ctx.lineTo(q[0][0],q[0][1]);
+      if(o.bot){ ctx.moveTo(q[0][0],q[0][1]); ctx.lineTo(q[1][0],q[1][1]); }
+      if(o.top){ ctx.moveTo(q[2][0],q[2][1]); ctx.lineTo(q[3][0],q[3][1]); }
+      ctx.stroke();
+    }
   });
+}
+// Corta cada pieza en "rebanadas" alineadas a las capas de paneles; así se dibuja capa por capa (sin parpadeo)
+function prepLayers(sc){
+  const a = sc.alt || 30, Ls = {};
+  sc.boxes.forEach(b=>{
+    const isBox = b.c==='#f59e0b'; let z = b.z0;
+    while(z < b.z1-1e-6){
+      const nz = Math.min(b.z1, (Math.floor(z/a+1e-6)+1)*a), li = Math.floor(z/a+1e-6), bot = z<=b.z0+1e-6;
+      (Ls[li] = Ls[li]||[]).push({x0:b.x0,y0:b.y0,x1:b.x1,y1:b.y1,z0:(isBox&&!bot)?z-.6:z,z1:nz,c:b.c,box:isBox,bot:bot,top:nz>=b.z1-1e-6});
+      z = nz;
+    }
+  });
+  return Object.keys(Ls).map(Number).sort((p,q)=>p-q).map(k=>Ls[k]);
+}
+// Orden de dibujo dentro de una capa: lo más lejano primero (comparando piezas vecinas, no centros)
+function orderPlan(items, s, c){
+  const n = items.length;
+  if(n>60) return items.slice().sort((p,q)=>((q.x0+q.x1)*s+(q.y0+q.y1)*c)-((p.x0+p.x1)*s+(p.y0+p.y1)*c));
+  const before = items.map(()=>[]), E = 1e-6;
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+    const a = items[i], b = items[j];
+    const sx = a.x1<=b.x0+E ? -1 : (b.x1<=a.x0+E ? 1 : 0), sy = a.y1<=b.y0+E ? -1 : (b.y1<=a.y0+E ? 1 : 0);
+    const fx = sx===-1 ? s<0 : s>0, fy = sy===-1 ? c<0 : c>0;
+    let aFar;
+    if(sx && sy) aFar = Math.abs(s)>=Math.abs(c) ? fx : fy;
+    else if(sx) aFar = fx; else if(sy) aFar = fy; else continue;
+    if(aFar) before[j].push(i); else before[i].push(j);
+  }
+  const vis = new Array(n).fill(0), out = [];
+  const visit = k=>{ if(vis[k]) return; vis[k] = 1; before[k].forEach(visit); out.push(items[k]); };
+  for(let k=0;k<n;k++) visit(k);
+  return out;
 }
 function drawScene(cv, sc, ang){
   const ctx = cv.getContext('2d'), CW = cv.width, CH = cv.height; ctx.clearRect(0,0,CW,CH);
@@ -2125,8 +2168,8 @@ function drawScene(cv, sc, ang){
     ctx.closePath(); if(fill){ ctx.fillStyle=fill; ctx.fill(); } if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.stroke(); }
   };
   poly([[0,0,0],[sc.W,0,0],[sc.W,sc.L,0],[0,sc.L,0]],'rgba(139,90,43,.5)','rgba(255,255,255,.5)');
-  const dep = b=>{ const q=P((b.x0+b.x1)/2,(b.y0+b.y1)/2,0); return q[2]*cp-((b.z0+b.z1)/2)*sp; };
-  sc.boxes.map(b=>({b,d:dep(b)})).sort((a,b)=>b.d-a.d).forEach(o=>{ const b=o.b; paintBox(ctx,P,s,c,b.x0+.8,b.y0+.8,b.z0,b.x1-.8,b.y1-.8,b.z1,b.c); });
+  if(!sc._L) sc._L = prepLayers(sc);
+  sc._L.forEach(items=>orderPlan(items,s,c).forEach(b=>paintBox(ctx,P,s,c,b.x0+.8,b.y0+.8,b.z0,b.x1-.8,b.y1-.8,b.z1,b.c,b)));
   ctx.setLineDash([5,4]);
   const E = [[0,0],[sc.W,0],[sc.W,sc.L],[0,sc.L]];
   E.forEach((a,i)=>{ const b=E[(i+1)%4]; poly([[a[0],a[1],H],[b[0],b[1],H]],null,'rgba(255,255,255,.4)'); poly([[a[0],a[1],0],[a[0],a[1],H]],null,'rgba(255,255,255,.4)'); });
@@ -2164,7 +2207,7 @@ function cjRead(){
   ['L','A','H','hol','holh','bl','bw','bh'].forEach(k=>{ CJ[k] = n(CJ_IDS[k],0); });
   CJ.qty = Math.floor(n('cj-qty',0)); CJ.bn = Math.floor(n('cj-bn',0)); CJ.bmode = R$('cj-bmode').value;
   try{ localStorage.setItem('lbd_cj',JSON.stringify(CJ)); }catch(e){}
-  calcCajon(); kickView(cjView);
+  if(!cjRead._q){ cjRead._q = requestAnimationFrame(()=>{ cjRead._q = 0; calcCajon(); kickView(cjView); }); }
 }
 function cjSetPer(n){ CJ.per = n; R$('cj-per-custom').value = ''; cjRead(); }
 function cjPerCustom(v){ const n=parseInt(v); if(n>0) CJ.per = Math.min(200,n); cjRead(); }
@@ -2219,6 +2262,7 @@ function cjFitManual(Wu, Lu, prod, N){
   }
   return b;
 }
+function setHTML(el,h){ if(el._h!==h){ el.innerHTML = h; el._h = h; } }
 function calcCajon(){
   const mm = v=>v*10, hol = mm(CJ.hol), holh = mm(CJ.holh), cm = v=>(v/10).toFixed(1);
   const W = mm(CJ.A), L = mm(CJ.L), H = mm(CJ.H), Wu = W-2*hol, Lu0 = L-2*hol, Hu = H-holh, alt = CJ.alt, mode = CJ.bmode;
@@ -2304,13 +2348,13 @@ function calcCajon(){
     if(reqL>Lu) need.push(`Largo: se necesitan ${cm(reqL)} cm útiles y hay ${cm(Lu)} cm (cajón mínimo ${cm(reqL+2*hol)} cm de largo)`);
   }
   if(CJ.qty>0 && hNeed>Hu) need.push(`Alto: se necesitan ${cm(hNeed)} cm y hay ${cm(Hu)} cm útiles (cajón mínimo ${cm(hNeed+holh)} cm de alto)`);
-  R$('cj-per-need').innerHTML = perN
+  setHTML(R$('cj-per-need'), perN
     ? `${perN} por capa (${fit.n}) ocupa ${cm(reqW)} × ${cm(reqL)} cm (ancho × largo). Cajón mínimo con holgura: <b>${cm(reqL+2*hol)} × ${cm(reqW+2*hol)} cm</b> (largo × ancho)${fitsFoot?'':' — <span style="color:#fecaca">no cabe en este cajón</span>'}`
-    : `Automático: el sistema usa la mayor cantidad que cabe (${per} por capa)`;
+    : `Automático: el sistema usa la mayor cantidad que cabe (${per} por capa)`);
   const occV = (placed*305*pl*alt + nb*bl*bw*bh)/(W*L*H)*100;
   const L1 = (a,b)=>`<div>${a}: <b>${b}</b></div>`;
   const modoTxt = {frente:'en la cara frontal, dentro de la pila', arriba:'encima de los paneles', fondo:'al fondo del cajón'}[mode];
-  res.innerHTML = `<div class="cj-sum">` +
+  const html = `<div class="cj-sum">` +
     L1('Interior (largo × ancho × alto)',`${CJ.L} × ${CJ.A} × ${CJ.H} cm`) +
     L1('Holgura',`${CJ.hol} cm por lado · ${CJ.holh} cm en alto`) +
     L1('Útil para paneles',`${cm(Lu)} × ${cm(Wu)} × ${cm(Hu-reserve)} cm`) +
@@ -2324,6 +2368,7 @@ function calcCajon(){
       : need.length ? `<div class="cj-msg bad">⚠️ No se puede cubicar por falta de espacio:<br>${need.map(t=>'• '+t).join('<br>')}</div>`
       : falta>0 ? `<div class="cj-msg bad">⚠️ Faltan ${falta} paneles: aumenta el alto, el largo o el ancho, o reduce la holgura</div>`
       : `<div class="cj-msg good">✅ Caben los ${CJ.qty} paneles${nb?` y ${nb} caja(s)`:''} en el cajón</div>`);
+  setHTML(res, html);
   // vista superior
   const c = R$('cj-top'), g = c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
   const m = 28, WW = fitsFoot ? W : Math.max(W,2*hol+reqW), LL = fitsFoot ? L : Math.max(L,2*hol+reqL);
@@ -2336,7 +2381,7 @@ function calcCajon(){
     bxs.filter(b=>b.z0===z0).forEach(b=>g.fillRect(ox+b.x0*k+1,oy+b.y0*k+1,(b.x1-b.x0)*k-2,(b.y1-b.y0)*k-2)); }
   g.fillStyle='rgba(255,255,255,.65)'; g.font='11px Segoe UI'; g.textAlign='center'; g.fillText(`Ancho ${CJ.A} cm`,c.width/2,oy-8);
   g.save(); g.translate(ox-10,c.height/2); g.rotate(-Math.PI/2); g.fillText(`Largo ${CJ.L} cm`,0,0); g.restore();
-  if(cjView) cjView.scene = {W:W, L:L, Hint:H, boxes:bx.concat(bxs), dim:`${CJ.H} cm`, hp:layers*alt, hpTxt:`${cm(layers*alt)} cm`, cap:need.length ? '⚠️ No se puede cubicar: falta espacio' : `${placed} paneles · ${nb} cajas · ${layers} capas`};
+  if(cjView) cjView.scene = {W:W, L:L, Hint:H, boxes:bx.concat(bxs), dim:`${CJ.H} cm`, alt:alt, hp:layers*alt, hpTxt:`${cm(layers*alt)} cm`, cap:need.length ? '⚠️ No se puede cubicar: falta espacio' : `${placed} paneles · ${nb} cajas · ${layers} capas`};
 }
 function cajonSheet(){
   if(!cjView) cjInit();
@@ -2348,6 +2393,19 @@ function cajonSheet(){
   });
   return aoaSheet(rows);
 }
+
+// ── Campos: sin autocompletar del teclado; la página vuelve a su lugar al enfocar/cerrar el teclado ──
+(function(){
+  document.querySelectorAll('input:not([type=password]):not([type=file]):not([type=checkbox]),textarea').forEach(i=>{
+    if(i.closest('#login-screen')) return;
+    i.setAttribute('autocomplete','off'); i.setAttribute('enterkeyhint','done');
+    if(i.type==='number') i.setAttribute('inputmode','decimal');
+  });
+  const reset = ()=>{ if(window.scrollY||document.body.scrollTop||document.documentElement.scrollTop){ window.scrollTo(0,0); document.body.scrollTop = 0; document.documentElement.scrollTop = 0; } };
+  addEventListener('scroll',reset,{passive:true});
+  document.addEventListener('focusout',()=>setTimeout(reset,250));
+  if(window.visualViewport) visualViewport.addEventListener('resize',()=>setTimeout(reset,120));
+})();
 
 startApp();
 </script>
