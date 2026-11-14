@@ -939,7 +939,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
         <div class="cj-row2">
           <div><label class="cj-lb">Cantidad de cajas</label><input class="cj-in" id="cj-bn" type="number" min="0" oninput="cjRead()"></div>
           <div><label class="cj-lb">Ubicación</label>
-            <select class="cj-in" id="cj-bmode" onchange="cjRead()"><option value="arriba">Encima de los paneles</option><option value="fondo">Al fondo del cajón</option></select></div>
+            <select class="cj-in" id="cj-bmode" onchange="cjRead()"><option value="frente">En la cara frontal (como pallet)</option><option value="arriba">Encima de los paneles</option><option value="fondo">Al fondo del cajón</option></select></div>
         </div>
         <div class="cj-row3" style="margin-top:12px">
           <div><label class="cj-lb">Largo (cm)</label><input class="cj-in" id="cj-bl" type="number" min="1" step="any" oninput="cjRead()"></div>
@@ -1271,7 +1271,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v10';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v11';
   init();
 }
 async function doLogin(){
@@ -2081,7 +2081,7 @@ function cubMenu(open){
   const sub = R$('cub-sub'), o = open===undefined ? getComputedStyle(sub).display==='none' : open;
   sub.style.display = o ? 'flex' : 'none'; R$('cub-caret').textContent = o ? '▴' : '▾';
 }
-const CJ_DEF = {per:0,L:100,A:100,H:100,hol:2,holh:0,prod:'305x305',alt:30,qty:100,bn:1,bmode:'arriba',bl:30,bw:30,bh:30};
+const CJ_DEF = {mv:1,per:0,L:100,A:100,H:100,hol:2,holh:0,prod:'305x305',alt:30,qty:100,bn:1,bmode:'frente',bl:30,bw:30,bh:30};
 let CJ = Object.assign({}, CJ_DEF), cjView = null;
 try{ Object.assign(CJ, JSON.parse(localStorage.getItem('lbd_cj')||'{}')); }catch(e){}
 const CJ_ALTS = [30,36,40,50,60,65,70,80];
@@ -2141,6 +2141,7 @@ function drawScene(cv, sc, ang){
 
 function cjInit(){
   if(cjView) return;
+  if(!CJ.mv){ CJ.bmode = 'frente'; CJ.mv = 1; }
   R$('cj-per-opts').innerHTML = [0,9,12,16,20,25].map(n=>`<button class="cj-chip" id="cj-per-${n}" onclick="cjSetPer(${n})">${n?n:'Auto'}</button>`).join('');
   if(CJ.per>0 && [9,12,16,20,25].indexOf(CJ.per)<0) R$('cj-per-custom').value = CJ.per;
   R$('cj-alt-opts').innerHTML = CJ_ALTS.map(a=>`<button class="cj-chip" id="cj-alt-${a}" onclick="cjSetAlt(${a})">${a} mm</button>`).join('');
@@ -2212,11 +2213,11 @@ function cjFitManual(Wu, Lu, prod, N){
 }
 function calcCajon(){
   const mm = v=>v*10, hol = mm(CJ.hol), holh = mm(CJ.holh), cm = v=>(v/10).toFixed(1);
-  const W = mm(CJ.A), L = mm(CJ.L), H = mm(CJ.H), Wu = W-2*hol, Lu0 = L-2*hol, Hu = H-holh, alt = CJ.alt;
-  R$('cj-util').textContent = `Útil para paneles: ${(Lu0/10).toFixed(1)} × ${(Wu/10).toFixed(1)} × ${(Hu/10).toFixed(1)} cm (largo × ancho × alto)`;
+  const W = mm(CJ.A), L = mm(CJ.L), H = mm(CJ.H), Wu = W-2*hol, Lu0 = L-2*hol, Hu = H-holh, alt = CJ.alt, mode = CJ.bmode;
+  R$('cj-util').textContent = `Útil para paneles: ${cm(Lu0)} × ${cm(Wu)} × ${cm(Hu)} cm (largo × ancho × alto)`;
   document.querySelectorAll('.cj-chip[id^="cj-alt-"]').forEach(b=>b.classList.toggle('on', b.id==='cj-alt-'+alt));
-  ['305x305','305x610'].forEach(p=>R$('cj-p-'+p).classList.toggle('on', CJ.prod===p));
   document.querySelectorAll('.cj-chip[id^="cj-per-"]').forEach(b=>b.classList.toggle('on', b.id==='cj-per-'+(CJ.per>0?CJ.per:0)));
+  ['305x305','305x610'].forEach(p=>R$('cj-p-'+p).classList.toggle('on', CJ.prod===p));
   const res = R$('cj-resumen');
   if(Wu<=0||Lu0<=0||Hu<=0||alt<=0){
     res.innerHTML = '<div class="cj-msg bad">⚠️ Revisa las medidas: no queda espacio útil dentro del cajón</div>';
@@ -2225,13 +2226,19 @@ function calcCajon(){
     return;
   }
   const bl = mm(CJ.bl), bw = mm(CJ.bw), bh = mm(CJ.bh); let nb = CJ.bn; const avisos = [];
-  let reserve = 0, Lu = Lu0, boxPer = 0, nx = 0, ny = 0, nz = 0, tiers = 0, rows = 0;
+  let reserve = 0, Lu = Lu0, boxPer = 0, nx = 0, nz = 0, tiers = 0, rows = 0;
   if(nb>0 && bl>0 && bw>0 && bh>0){
-    nx = Math.floor(Wu/bw);
-    if(CJ.bmode==='arriba'){ ny=Math.floor(Lu0/bl); boxPer=nx*ny; if(boxPer){ tiers=Math.ceil(nb/boxPer); reserve=tiers*bh; } }
-    else { nz=Math.floor(Hu/bh); boxPer=nx*nz; if(boxPer){ rows=Math.ceil(nb/boxPer); Lu=Lu0-rows*bl; } }
-    if(!boxPer || Lu<=0 || reserve>=Hu){ avisos.push(`Las ${CJ.bn} cajas no caben con esta configuración`); nb=0; reserve=0; Lu=Lu0; tiers=0; rows=0; }
+    if(mode==='arriba'){
+      nx = Math.floor(Wu/bw); boxPer = nx*Math.floor(Lu0/bl);
+      if(boxPer){ tiers = Math.ceil(nb/boxPer); reserve = tiers*bh; }
+      if(!boxPer || reserve>=Hu){ avisos.push(`Las ${CJ.bn} cajas no caben con esta configuración`); nb=0; reserve=0; tiers=0; }
+    } else if(mode==='fondo'){
+      nx = Math.floor(Wu/bw); nz = Math.floor(Hu/bh); boxPer = nx*nz;
+      if(boxPer){ rows = Math.ceil(nb/boxPer); Lu = Lu0-rows*bl; }
+      if(!boxPer || Lu<=0){ avisos.push(`Las ${CJ.bn} cajas no caben con esta configuración`); nb=0; Lu=Lu0; rows=0; }
+    }
   } else nb = 0;
+  // capa de paneles
   const perN = CJ.per>0 ? Math.min(200,CJ.per) : 0;
   let fit, fitsFoot = true, reqW, reqL;
   if(perN){ fit = cjFitManual(Wu,Lu,CJ.prod,perN); fitsFoot = fit.fits; reqW = fit.reqW; reqL = fit.reqL; }
@@ -2241,24 +2248,48 @@ function calcCajon(){
     else { fitsFoot = false; reqW = 305; reqL = CJ.prod==='305x610' ? 610 : 305; }
   }
   const per = fitsFoot ? fit.p.length : 0, maxL = Math.floor((Hu-reserve)/alt);
-  const cap = per*maxL, placed = Math.min(CJ.qty,cap), layers = per ? Math.ceil(placed/per) : 0, falta = CJ.qty-placed;
-  const pl = CJ.prod==='305x610' ? 610 : 305;
-  const bx = []; let left = placed;
+  // cajas dentro de la pila, cara frontal (igual que la cubicación de pallets)
+  let fr = null;
+  if(mode==='frente' && nb>0 && per>0){
+    const p0 = fit.p[0], s = Math.max(1, Math.ceil(bw/p0.w)*Math.ceil(bl/p0.l)), nB = Math.max(1, Math.ceil(bh/alt)), perTier = Math.floor(per/s);
+    if(perTier<1){ avisos.push('La caja es más grande que el espacio de un panel: no se puede colocar en la pila'); nb = 0; }
+    else {
+      const order = fit.p.map((q,i)=>i).sort((a,b)=>{ const qa=fit.p[a], qb=fit.p[b]; return (Math.round(qa.y)-Math.round(qb.y)) || (Math.abs(qa.x+qa.w/2-Wu/2)-Math.abs(qb.x+qb.w/2-Wu/2)); });
+      fr = {s:s, nB:nB, perTier:perTier, T:Math.ceil(nb/perTier), order:order, consumed:nb*s*nB};
+    }
+  }
+  const consumed = fr ? fr.consumed : 0, boxLayers = fr ? fr.T*fr.nB : 0;
+  const cap = fr ? Math.max(0,per*maxL-consumed) : per*maxL;
+  const placed = Math.min(CJ.qty,cap), falta = CJ.qty-placed;
+  const layers = per ? (fr ? Math.max(Math.ceil((placed+consumed)/per), boxLayers) : Math.ceil(placed/per)) : 0;
+  const pl = CJ.prod==='305x610' ? 610 : 305, b0 = fr ? Math.max(0,layers-2-boxLayers) : 0;
+  // escena
+  const bx = [], bxs = []; let left = placed;
   for(let l=0;l<layers;l++){
-    const list = fit.p.slice(0,left); left -= list.length;
+    let occ = null;
+    if(fr && l>=b0 && l<b0+boxLayers){ const t=Math.floor((l-b0)/fr.nB), c=Math.min(fr.perTier,nb-t*fr.perTier); occ = new Set(fr.order.slice(0,c*fr.s)); }
+    const list = fit.p.filter((q,i)=>!(occ&&occ.has(i))).slice(0,left); left -= list.length;
     list.forEach(q=>bx.push({x0:hol+q.x,y0:hol+q.y,z0:l*alt,x1:hol+q.x+q.w,y1:hol+q.y+q.l,z1:(l+1)*alt,c:q.rot?'#38bdf8':'#2e9e7a'}));
   }
-  const bxs = [];
   for(let k=0; fitsFoot && k<nb; k++){
-    if(CJ.bmode==='arriba'){ const t=Math.floor(k/boxPer), i=k%boxPer, ix=i%nx, iy=Math.floor(i/nx), z=layers*alt+t*bh;
-      bxs.push({x0:hol+ix*bw,y0:hol+iy*bl,z0:z,x1:hol+ix*bw+bw,y1:hol+iy*bl+bl,z1:z+bh,c:'#f59e0b'}); }
-    else { const r=Math.floor(k/boxPer), i=k%boxPer, ix=i%nx, iz=Math.floor(i/nx), y=hol+Lu0-(r+1)*bl;
-      bxs.push({x0:hol+ix*bw,y0:y,z0:iz*bh,x1:hol+ix*bw+bw,y1:y+bl,z1:iz*bh+bh,c:'#f59e0b'}); }
+    if(mode==='frente' && fr){
+      const t = Math.floor(k/fr.perTier), j = k%fr.perTier, sl = fr.order.slice(j*fr.s,(j+1)*fr.s).map(i=>fit.p[i]);
+      const cx = (Math.min(...sl.map(q=>q.x))+Math.max(...sl.map(q=>q.x+q.w)))/2, cy = (Math.min(...sl.map(q=>q.y))+Math.max(...sl.map(q=>q.y+q.l)))/2, z = (b0+t*fr.nB)*alt;
+      bxs.push({x0:hol+cx-bw/2,y0:hol+cy-bl/2,z0:z,x1:hol+cx+bw/2,y1:hol+cy+bl/2,z1:z+bh,c:'#f59e0b'});
+    } else if(mode==='arriba'){
+      const t=Math.floor(k/boxPer), i=k%boxPer, ix=i%nx, iy=Math.floor(i/nx), z=layers*alt+t*bh;
+      bxs.push({x0:hol+ix*bw,y0:hol+iy*bl,z0:z,x1:hol+ix*bw+bw,y1:hol+iy*bl+bl,z1:z+bh,c:'#f59e0b'});
+    } else if(mode==='fondo'){
+      const r=Math.floor(k/boxPer), i=k%boxPer, ix=i%nx, iz=Math.floor(i/nx), y=hol+Lu0-(r+1)*bl;
+      bxs.push({x0:hol+ix*bw,y0:y,z0:iz*bh,x1:hol+ix*bw+bw,y1:y+bl,z1:iz*bh+bh,c:'#f59e0b'});
+    }
   }
-  const boxTop = nb ? (CJ.bmode==='arriba' ? layers*alt+tiers*bh : Math.ceil(Math.min(nb,boxPer)/nx)*bh) : 0;
-  const needH = Math.max(layers*alt, boxTop);
-  const perH = Math.max(1, per||perN||1), layersNeed = Math.ceil(CJ.qty/perH);
-  const hNeed = CJ.bmode==='arriba' ? layersNeed*alt + (nb?tiers*bh:0) : Math.max(layersNeed*alt, nb?Math.ceil(Math.min(nb,boxPer)/nx)*bh:0);
+  // alto necesario y alertas
+  const perH = Math.max(1, per||perN||1);
+  let hNeed;
+  if(mode==='frente') hNeed = Math.max(Math.ceil((CJ.qty+consumed)/perH), boxLayers)*alt;
+  else if(mode==='arriba') hNeed = Math.ceil(CJ.qty/perH)*alt + (nb?tiers*bh:0);
+  else hNeed = Math.max(Math.ceil(CJ.qty/perH)*alt, nb?Math.ceil(Math.min(nb,boxPer)/nx)*bh:0);
   const need = [];
   if(!fitsFoot){
     if(reqW>Wu) need.push(`Ancho: se necesitan ${cm(reqW)} cm útiles y hay ${cm(Wu)} cm (cajón mínimo ${cm(reqW+2*hol)} cm de ancho)`);
@@ -2268,17 +2299,18 @@ function calcCajon(){
   R$('cj-per-need').innerHTML = perN
     ? `${perN} por capa (${fit.n}) ocupa ${cm(reqW)} × ${cm(reqL)} cm (ancho × largo). Cajón mínimo con holgura: <b>${cm(reqL+2*hol)} × ${cm(reqW+2*hol)} cm</b> (largo × ancho)${fitsFoot?'':' — <span style="color:#fecaca">no cabe en este cajón</span>'}`
     : `Automático: el sistema usa la mayor cantidad que cabe (${per} por capa)`;
-  const occ = (placed*305*pl*alt + nb*bl*bw*bh)/(W*L*H)*100;
+  const occV = (placed*305*pl*alt + nb*bl*bw*bh)/(W*L*H)*100;
   const L1 = (a,b)=>`<div>${a}: <b>${b}</b></div>`;
+  const modoTxt = {frente:'en la cara frontal, dentro de la pila', arriba:'encima de los paneles', fondo:'al fondo del cajón'}[mode];
   res.innerHTML = `<div class="cj-sum">` +
     L1('Interior (largo × ancho × alto)',`${CJ.L} × ${CJ.A} × ${CJ.H} cm`) +
     L1('Holgura',`${CJ.hol} cm por lado · ${CJ.holh} cm en alto`) +
-    L1('Útil para paneles',`${(Lu/10).toFixed(1)} × ${(Wu/10).toFixed(1)} × ${((Hu-reserve)/10).toFixed(1)} cm`) +
+    L1('Útil para paneles',`${cm(Lu)} × ${cm(Wu)} × ${cm(Hu-reserve)} cm`) +
     L1('Patrón por capa',fit.n) + L1('Paneles por capa',perN?`${perN} (manual)`:per) + L1('Capas máximas',maxL) + L1('Capacidad de paneles',cap) +
     L1('Paneles pedidos → ubicados',`${CJ.qty} → ${placed}`) +
     L1('Capas usadas',`${layers} (${(layers*alt/10).toFixed(1)} cm de paneles)`) +
-    L1('Cajas',`${nb} de ${CJ.bn} · ${CJ.bl}×${CJ.bw}×${CJ.bh} cm · ${CJ.bmode==='arriba'?'encima de los paneles':'al fondo del cajón'}`) +
-    L1('Cajón mínimo (largo × ancho × alto)',`${cm(reqL+2*hol)} × ${cm(reqW+2*hol)} × ${cm(hNeed+holh)} cm`) + L1('Ocupación del volumen',`${occ.toFixed(0)}%`) + `</div>` +
+    L1('Cajas',`${nb} de ${CJ.bn} · ${CJ.bl}×${CJ.bw}×${CJ.bh} cm · ${modoTxt}`) +
+    L1('Cajón mínimo (largo × ancho × alto)',`${cm(reqL+2*hol)} × ${cm(reqW+2*hol)} × ${cm(hNeed+holh)} cm`) + L1('Ocupación del volumen',`${occV.toFixed(0)}%`) + `</div>` +
     avisos.map(a=>`<div class="cj-msg bad">⚠️ ${a}</div>`).join('') +
     (CJ.qty<=0 ? `<div class="cj-msg bad">⚠️ Ingresa la cantidad de paneles</div>`
       : need.length ? `<div class="cj-msg bad">⚠️ No se puede cubicar por falta de espacio:<br>${need.map(t=>'• '+t).join('<br>')}</div>`
@@ -2296,7 +2328,6 @@ function calcCajon(){
     bxs.filter(b=>b.z0===z0).forEach(b=>g.fillRect(ox+b.x0*k+1,oy+b.y0*k+1,(b.x1-b.x0)*k-2,(b.y1-b.y0)*k-2)); }
   g.fillStyle='rgba(255,255,255,.65)'; g.font='11px Segoe UI'; g.textAlign='center'; g.fillText(`Ancho ${CJ.A} cm`,c.width/2,oy-8);
   g.save(); g.translate(ox-10,c.height/2); g.rotate(-Math.PI/2); g.fillText(`Largo ${CJ.L} cm`,0,0); g.restore();
-  // 3D
   if(cjView) cjView.scene = {W:W, L:L, Hint:H, boxes:bx.concat(bxs), dim:`${CJ.H} cm`, cap:need.length ? '⚠️ No se puede cubicar: falta espacio' : `${placed} paneles · ${nb} cajas · ${layers} capas`};
 }
 function cajonSheet(){
