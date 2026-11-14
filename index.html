@@ -952,7 +952,7 @@ body.locked .sidebar,body.locked .main-content,body.locked #menu-btn{display:non
       <div class="chart-card"><div class="chart-card-title">📊 Resumen del cajón</div><div id="cj-resumen"></div></div>
       <div class="cj-views" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
         <div class="chart-card" style="min-width:0"><div class="chart-card-title">🎲 Vista 3D (arrastra para girar)</div>
-          <div style="display:flex;justify-content:center"><canvas id="cj-3d" width="420" height="400" style="border-radius:8px;max-width:100%;touch-action:pan-y;cursor:grab"></canvas></div></div>
+          <div style="display:flex;justify-content:center"><canvas id="cj-3d" width="520" height="400" style="border-radius:8px;max-width:100%;touch-action:pan-y;cursor:grab"></canvas></div></div>
         <div class="chart-card" style="min-width:0"><div class="chart-card-title">🔭 Vista superior — primera capa</div>
           <div style="display:flex;justify-content:center"><canvas id="cj-top" width="360" height="360" style="max-width:100%"></canvas></div></div>
       </div>
@@ -1271,7 +1271,7 @@ function showLogin(){ document.body.classList.add('locked'); }
 function startApp(){
   if(!session){ showLogin(); return; }
   document.body.classList.remove('locked');
-  document.getElementById('sb-user').textContent = (session.email||'') + ' · v11';
+  document.getElementById('sb-user').textContent = (session.email||'') + ' · v12';
   init();
 }
 async function doLogin(){
@@ -2134,8 +2134,16 @@ function drawScene(cv, sc, ang){
   const lx = cx+k*R+16, y0 = cy, y1 = cy-k*H*cp;
   ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1; ctx.beginPath();
   ctx.moveTo(lx,y0); ctx.lineTo(lx,y1); ctx.moveTo(lx-4,y0); ctx.lineTo(lx+4,y0); ctx.moveTo(lx-4,y1); ctx.lineTo(lx+4,y1); ctx.stroke();
-  ctx.fillStyle='#fff'; ctx.font='bold 13px Segoe UI'; ctx.textAlign='left'; ctx.textBaseline='middle';
-  ctx.fillText(sc.dim, lx+7, (y0+y1)/2);
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='10px Segoe UI'; ctx.fillText('Alto interior', lx+7, (y0+y1)/2-9);
+  ctx.fillStyle='#fff'; ctx.font='bold 13px Segoe UI'; ctx.fillText(sc.dim, lx+7, (y0+y1)/2+6);
+  if(sc.hp>0){
+    const px = cx-k*R-14, y2 = cy-k*sc.hp*cp;
+    ctx.strokeStyle='#a8e6c8'; ctx.lineWidth=1; ctx.beginPath();
+    ctx.moveTo(px,y0); ctx.lineTo(px,y2); ctx.moveTo(px-4,y0); ctx.lineTo(px+4,y0); ctx.moveTo(px-4,y2); ctx.lineTo(px+4,y2); ctx.stroke();
+    ctx.textAlign='right'; ctx.fillStyle='#a8e6c8'; ctx.font='10px Segoe UI'; ctx.fillText('Paneles', px-7, (y0+y2)/2-9);
+    ctx.fillStyle='#fff'; ctx.font='bold 13px Segoe UI'; ctx.fillText(sc.hpTxt, px-7, (y0+y2)/2+6);
+  }
   ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='11px Segoe UI'; ctx.fillText(sc.cap, CW/2, CH-10);
 }
 
@@ -2328,7 +2336,7 @@ function calcCajon(){
     bxs.filter(b=>b.z0===z0).forEach(b=>g.fillRect(ox+b.x0*k+1,oy+b.y0*k+1,(b.x1-b.x0)*k-2,(b.y1-b.y0)*k-2)); }
   g.fillStyle='rgba(255,255,255,.65)'; g.font='11px Segoe UI'; g.textAlign='center'; g.fillText(`Ancho ${CJ.A} cm`,c.width/2,oy-8);
   g.save(); g.translate(ox-10,c.height/2); g.rotate(-Math.PI/2); g.fillText(`Largo ${CJ.L} cm`,0,0); g.restore();
-  if(cjView) cjView.scene = {W:W, L:L, Hint:H, boxes:bx.concat(bxs), dim:`${CJ.H} cm`, cap:need.length ? '⚠️ No se puede cubicar: falta espacio' : `${placed} paneles · ${nb} cajas · ${layers} capas`};
+  if(cjView) cjView.scene = {W:W, L:L, Hint:H, boxes:bx.concat(bxs), dim:`${CJ.H} cm`, hp:layers*alt, hpTxt:`${cm(layers*alt)} cm`, cap:need.length ? '⚠️ No se puede cubicar: falta espacio' : `${placed} paneles · ${nb} cajas · ${layers} capas`};
 }
 function cajonSheet(){
   if(!cjView) cjInit();
